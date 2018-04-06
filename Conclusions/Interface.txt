@@ -1,0 +1,24 @@
+1. 接口中内容的定义：
+	1.JDK8.0以前的接口中：
+		->变量默认是public, static, final的。
+		->方法默认是public, abstract的。
+		public interface JDK8BeforeInterface {  
+			public static final int field1 = 0;  		  
+			int field2 = 0;  		  
+			public abstract void method1(int a) throws Exception;  		  
+			void method2(int a) throws Exception;  
+		}
+	2.JDK8.0及以后：
+		->允许我们在接口中定义static方法和default方法。
+		->静态方法，只能通过接口名调用，不可以通过实现类的类名或者实现类的对象调用
+		->default方法，只能通过接口实现类的对象来调用。
+		    public interface JDK8Interface {        
+				// static修饰符定义静态方法  
+				static void staticMethod() {  
+					System.out.println("接口中的静态方法");  
+				}  			  
+				// default修饰符定义默认方法  
+				default void defaultMethod() {  
+					System.out.println("接口中的默认方法");  
+				}  
+			}
