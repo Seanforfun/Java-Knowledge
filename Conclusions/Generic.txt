@@ -7,7 +7,7 @@
 2.泛型方法：
 	1.普通类中定义泛型方法：
 	class Test{ 
-		public static <T> T test(T...t){			//返回值是T类型，参数是T类型。<T>是变量限定，参见第三条，<T> T 缺一不可。
+		public static <T> T test(T...t){			//返回值是T类型，参数是T类型。<T>是变量限定，限定了返回值或形参或both，参见第三条，<T> T 缺一不可。
 		}
 	}
 	错误调用：
@@ -33,3 +33,43 @@
 		个人认为数组是通过地址访问的，而不同的参数类型所占用字节数不同，无法实现index访问。
 		ArrayStoreException印证我的观点。
 		可以声明通配类型的数组然后进行类型强转。
+	3.不能实例化一个泛型对象，可以通过如下办法：
+	private Class<T> entityClass; 
+	
+	public BaseImpl(){
+			Type genType = getClass().getGenericSuperclass();   
+			Type[] params = ((ParameterizedType) genType).getActualTypeArguments();   
+			entityClass =  (Class)params[0];  
+	}
+	4.Java泛型不能使用静态域和静态方法：
+		静态域是类共享的，所有的泛型类的实现会造成静态域的类型不明确：
+		public static T a;
+		我创建两个类对象，分别给String和Integer，T的类型就不明确了，所以错误！
+6.泛型类的继承规则：
+	**无论S和T有什么联系，Pair<S>和Pair<T>没有什么联系。
+7.通配符类型：
+	1.通配符类型的泛型允许类型参数变化。
+		Pair<? extends Employee> 表明泛型可以使任意类型，只要是Employee的子类即可。
+		我把这一点看作是对第六点的优化。这样我们就能对Employee的子类进行统一的处理了。
+	2.通配符允许我们进行超类型限定：
+		Pair<? super Manager> 	将泛型限定为所有Manager的父类。
+		这种方法可以用于固定形参，不能用于固定返回值。
+		但是如下的方法是成立的：<T extends Comparable<? super T>>			extends对泛型上界进行了限定，super对泛型下界进行了限定。
+		<T extends Comparable<? super T>>这里来分析T表示任意字符名，extends对泛型上限进行了限制即T必须是Comparable<? super T>的子类，然后<? super T>表示Comparable<>中的类型下限为T！
+
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	
