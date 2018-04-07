@@ -1,0 +1,63 @@
+--------------------------------------------------Multi-thread and Lock--------------------------------------------------
+1.通过继承Thread来实现多线程，并重写run方法：
+public class MyThread extends Thread {
+	private int i = 0;
+	@Override
+	public void run() {
+		for (; i < 100; i++) {
+			System.out.println(getName() + " " + i);
+		}
+	}
+	public static void main(String[] args) {
+		for(int i = 0; i < 100; i++){
+			System.out.println(Thread.currentThread().getName() + " " + i);
+			if(i == 20){
+				new MyThread().start();
+				new MyThread().start();
+			}
+		}
+	}
+}
+打印的结果，有三条线程同时执行，main线程和thread-0和thread-1，均会打印出从0-99的值。
+每次启动新的线程在heap中创建了一个新的Mythread对象，每个Mythread对象都有私有的i属性，所以不会产生多线程安全问题。
+源码：
+	@Override
+    public void run() {					//Thread源码中的run方法是调用了target的run方法，而target是一个callable对象，如果没有传入callable对象这个方法什么都不做，所以利用overide在子类中对该方法进行定义。
+        if (target != null) {
+            target.run();
+        }
+    }
+	
+	public synchronized void start() {												//Change the thread from NEW to Runable.
+        /**
+         * This method is not invoked for the main method thread or "system"
+         * group threads created/set up by the VM. Any new functionality added
+         * to this method in the future may have to also be added to the VM.
+         *
+         * A zero status value corresponds to state "NEW".
+         */
+        if (threadStatus != 0)														//该线程对象是否处于NEW state。
+            throw new IllegalThreadStateException();
+
+        /* Notify the group that this thread is about to be started
+         * so that it can be added to the group's list of threads
+         * and the group's unstarted count can be decremented. */
+        group.add(this);															//每个线程对象都有一个私有的ThreadGroup对象，将当前线程加入线程组，线程组被初始化时nUnstartedThreads被设置，现在可以--
+
+        boolean started = false;
+        try {
+            start0();				-->private native void start0();				//调用C或是C++来启动当前线程。
+            started = true;
+        } finally {
+            try {
+                if (!started) {														//如果start失败，即C语言失败，修改ThreadGroup中对应的参数。C中对应的线程如果启动失败一般都是Core dump，不知道如何捕捉异常，需要研究JVM。
+                    group.threadStartFailed(this);
+                }
+            } catch (Throwable ignore) {
+                /* do nothing. If start0 threw a Throwable then
+                  it will be passed up the call stack */
+            }
+        }
+    }
+	
+	
