@@ -1,0 +1,23 @@
+---------------------------------------------------------------Serialize---------------------------------------------------------------------
+1.实现了java.io.Serializable的类均会被序列化：
+	public interface Serializable {
+	}
+2.实现Externalizable 接口的类：
+	重写：
+	@Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeObject(content);
+    }
+ 
+    @Override
+    public void readExternal(ObjectInput in) throws IOException,
+            ClassNotFoundException {
+        content = (String) in.readObject();
+    }	
+******************************************************transient******************************************************************
+在实现java.io.Serializable的类中，有的变量不想被序列化，可以在这样的属性前面加上transient修饰符，这个字段的生命周期仅存于调用者的内存中而不会写到磁盘里持久化。
+1）一旦变量被transient修饰，变量将不再是对象持久化的一部分，该变量内容在序列化后无法获得访问。
+2）transient关键字只能修饰变量，而不能修饰方法和类。注意，本地变量是不能被transient关键字修饰的。变量如果是用户自定义类变量，则该类需要实现Serializable接口。
+3）被transient关键字修饰的变量不再能被序列化，一个静态变量不管是否被transient修饰，均不能被序列化。
+	有的时候发现反序列化出来的属性可以被读取是因为静态变量存储在静态区中，所以可以被加载出来。
+***实现Externalizable属性将不会再对transient进行特殊处理。
