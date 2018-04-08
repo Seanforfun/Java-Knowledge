@@ -56,6 +56,16 @@
 		这种方法可以用于固定形参，不能用于固定返回值。
 		但是如下的方法是成立的：<T extends Comparable<? super T>>			extends对泛型上界进行了限定，super对泛型下界进行了限定。
 		<T extends Comparable<? super T>>这里来分析T表示任意字符名，extends对泛型上限进行了限制即T必须是Comparable<? super T>的子类，然后<? super T>表示Comparable<>中的类型下限为T！
+		
+****8.泛型接口：
+	public interface GenericInterface<T extends Number> {
+		public <T> T test();
+	}
+	尽量将泛型的修饰符写在类中而不是写在使用中。
+	public interface GenericInterface<T> {				//BAD!!!!
+		public <T extends Number> T test();
+	}
+	
 
 		
 		

@@ -113,6 +113,87 @@ public class MyRunnable implements Runnable {
 	
 *************************************************************************************************************************
 3.实现Callable接口实现多线程：
+	package ca.mcmaster.multithread;
+
+	import java.util.concurrent.Callable;
+	import java.util.concurrent.FutureTask;
+
+	/**
+	 * @author SeanForFun E-mail:xiaob6@mcmaster.ca
+	 * @date Apr 7, 2018 7:29:10 PM
+	 * @version 1.0
+	 */
+	public class MyCallable implements Callable<Integer> {
+		@Override
+		public Integer call() throws Exception {
+			int i = 0;
+			for (i = 0; i < 100; i++) {
+				System.out.println(Thread.currentThread().getName() + " " + i);
+			}
+			return i;
+		}
+		
+		public static void main(String[] args) {
+			MyCallable myCallable = new MyCallable();
+			FutureTask<Integer> futureTask = new FutureTask<>(myCallable);					//一个FutureTask只能接受一个Callable对象（已经验证），不然会造成返回值的同步问题（个人猜测）。
+			for(int i = 0; i < 100; i ++){
+				System.out.println(Thread.currentThread().getName() + " " + i);
+				if(i == 20){
+					new Thread(futureTask, "callable-0").start();
+				}
+			}
+			try {
+				System.out.println("Value returned from thread: " + futureTask.get());		//通过get方法获取线程的返回值。
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	源码：
+	public FutureTask(Callable<V> callable) {									
+        if (callable == null)
+            throw new NullPointerException();
+        this.callable = callable;														//一个FutureTask只能接受一个Callable对象
+        this.state = NEW;       // ensure visibility of callable
+    }
+	public void run() {																	//Thread对象调用run()方法
+        if (state != NEW ||
+            !UNSAFE.compareAndSwapObject(this, runnerOffset,
+                                         null, Thread.currentThread()))
+            return;
+        try {
+            Callable<V> c = callable;
+            if (c != null && state == NEW) {
+                V result;
+                boolean ran;															//调用call()方法。
+                try {
+                    result = c.call();
+                    ran = true;
+                } catch (Throwable ex) {
+                    result = null;
+                    ran = false;
+                    setException(ex);
+                }
+                if (ran)
+                    set(result);														//将局部变量result更新到线程的属性outcome。
+            }																			//private Object outcome;  non-volatile, protected by state reads/writes
+        } finally {
+            // runner must be non-null until state is settled to
+            // prevent concurrent calls to run()
+            runner = null;
+            // state must be re-read after nulling runner to prevent
+            // leaked interrupts
+            int s = state;
+            if (s >= INTERRUPTING)
+                handlePossibleCancellationInterrupt(s);
+        }
+    }
+总结：
+	1.该方法也是通过实现接口实现多线程。相对清洁。
+	2.实际上是利用了FutureTask类的对象。每个FutureTask对象会接收一个Callable的实现对象，不能接收多个！
+	3.实际上是和Runnable方法的实现方式一致，因为FutureTask是Runnable接口的子类。
+	
+
 	
 	
 	
