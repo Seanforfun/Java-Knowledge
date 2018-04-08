@@ -337,8 +337,31 @@ java.util.concurrent.locks.AbstractQueuedSynchronizer
 	所有的线程被排在一个FIFO队列中，按序获取资源。
 
 ---------------------------------------------------CAS-----------------------------------------------------------------------
+CAS:Compare and swap
+这是一种乐观锁技术，甚至可以通过无锁实现。
+多个线程获取临界资源时，获取资源失败时不会进入Blocked state，同时可以再次尝试获取该锁。
+实现方式：CAS操作中包含三个操作数——需要读写的内存位置(V)、进行比较的预期原值(A)和拟写入的新值(B)。如果内存位置V的值与预期原值A相匹配，那么处理器会自动将该位置值更新为新值B，否则处理器不做任何操作。
 
-
+源码分析：java.util.concurrent.atomic.AtomicInteger
+	临界资源：private volatile int value;
+	 public final int get() {
+        return value;									//因为value被volatile修饰了，所以保证了可见性。
+    }
+	public final int getAndIncrement() {
+        for (;;) {										//通过while循环构成了一个类似自旋锁的结构，不断尝试获得当前资源的访问权。
+            int current = get();
+            int next = current + 1;						
+            if (compareAndSet(current, next))			//通过变量当前所存储的值是不是和期望值一致，如果是的话则更新成功。
+                return current;							//如果不一致，则一致尝试更新，直到可以判断到当前值已经被成功更新。
+        }
+    }
+	 public final boolean compareAndSet(int expect, int update) {				//判断是否可以被更新，通过比较当前值是否和期待值一致，是的话即可以更新。
+        return unsafe.compareAndSwapInt(this, valueOffset, expect, update);		//native
+    }
+	
+总结：CAS是一种实现线程安全的技术。由于减少了从Runnable到Block的过程，减少了用户态与内核态的切换，减少了系统级别的开销。
+	  但是，重复尝试获取资源的方式也是一种自旋的体现，实际上也增加了一定的CPU开销。
+	  
 ---------------------------------------------------Synchronized--------------------------------------------------------------
 1.首先可以确认，synchronized是可重入锁，在get中调用了set，而此时的get并没有解锁而set又需要获取锁，同事发现set执行了，说明在同一个代码块中，内部的代码会自动获取synchronized锁，我们称之为可重入锁。
 public class RtLock implements Runnable {
@@ -410,7 +433,47 @@ public class RtLock implements Runnable {
 ***总结：事实上synchronized方法是在告诉JVM，不要再将资源放在缓存中了！每次直接更新到内存中。
 		这是一种重量级的锁，每次都会导致获取不到资源的线程挂起，而挂起和恢复的过程都是用户态和内核态的切换，十分占用系统资源。
 ---------------------------------------------------ReentrantLock-------------------------------------------------------------
+ReentrantLock可以被设定为公平锁和非公平锁：
+	源码：
+	public ReentrantLock(boolean fair) {
+        sync = fair ? new FairSync() : new NonfairSync();
+    }
+public class ReentrantLockTest implements Runnable {
+	private ReentrantLock reentrantLock = new ReentrantLock(false);
+	private int value = 0;
+	@Override
+	public void run() {
+		reentrantLock.lock();
+		for(int i = 0; i < 3; i++){
+			updateValue();
+		}
+		reentrantLock.unlock();
+	}
+	
+	private void updateValue() {
+		reentrantLock.lock();
+		System.out.println(Thread.currentThread() + " " + value++);
+		reentrantLock.unlock();
+	}
 
+	public static void main(String[] args) {
+		ReentrantLockTest rtLock = new ReentrantLockTest();
+		for(int i = 0; i < 10; i ++){
+			new Thread(rtLock).start();
+		}
+	}
+}
+结果：
+	Thread[Thread-0,5,main] 0
+	Thread[Thread-0,5,main] 1
+	Thread[Thread-0,5,main] 2
+	Thread[Thread-1,5,main] 3
+	Thread[Thread-1,5,main] 4
+	Thread[Thread-1,5,main] 5
+	Thread[Thread-2,5,main] 6
+	Thread[Thread-2,5,main] 7
+结论：
+	与synchronized类似，ReentrantLock是一种可重入锁，我们发现内部的updateValue方法被运行了而外部的锁和内部的锁是同一个锁，且外部的锁没有释放。
 
 ---------------------------------------------------SpinLock------------------------------------------------------------------
 
