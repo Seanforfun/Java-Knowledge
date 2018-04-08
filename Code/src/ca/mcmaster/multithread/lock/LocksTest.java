@@ -8,6 +8,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * @version 1.0
  */
 public class LocksTest {
-	ReentrantLock fairLock = new ReentrantLock(true);			//公平锁，与非公平锁相比吞吐量较小
-	ReentrantLock unfairLock = new ReentrantLock();					//非公平锁
+	ReentrantLock fairLock = new ReentrantLock(true);			
+	ReentrantLock unfairLock = new ReentrantLock();					
 }
