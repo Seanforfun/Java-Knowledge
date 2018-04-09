@@ -483,6 +483,7 @@ public class ReentrantLockTest implements Runnable {
 	Thread[Thread-2,5,main] 7
 结论：
 	与synchronized类似，ReentrantLock是一种可重入锁，我们发现内部的updateValue方法被运行了而外部的锁和内部的锁是同一个锁，且外部的锁没有释放。
+	我认为！ReentrantLock是对synchronized的一种轻量化和增强，我们无法再重写类似run方法时使用synchronized，但是我们可以使用加锁的方式实现！！！！！
 
 ---------------------------------------------------SpinLock------------------------------------------------------------------
 自旋锁是一种锁设计模式，我个人认为这实际是一种无锁设计来保证线程安全。
@@ -607,11 +608,76 @@ public class ReentrantLockTest implements Runnable {
 
 ---------------------------------------------------Pass Values to thread-----------------------------------------------------
 *************************************************Constructor*****************************************************************
+实现：
+	public class PassParameterByConstructor implements Runnable {
+		private volatile Integer i = null;
+		private ReentrantLock rtLock = new ReentrantLock();
+		public PassParameterByConstructor(Integer i){
+			this.i = i;
+		}
+		@Override
+		public void run() {
+			rtLock.lock();
+			for (int j = 0; j < 2; j++) {
+				System.out.println(Thread.currentThread().getName() + " " + i++);
+			}
+			rtLock.unlock();
+		}
 
+		public static void main(String[] args) {
+			PassParameterByConstructor p = new PassParameterByConstructor(10);
+			for(int j = 0; j < 10; j++){
+				new Thread(p).start();
+			}
+		}
+	}
 *************************************************Use variables and methods***************************************************
-
-*************************************************Use Callback functions******************************************************
-
+实现：
+	public class PassParaByMethod implements Runnable{
+		private ReentrantLock reentrantLock = new ReentrantLock();
+		private Integer a = null;
+		public void run() {
+			reentrantLock.lock();
+			for (int j = 0; j < 2; j++) {
+				System.out.println(Thread.currentThread().getName() + " " + a++);
+			}
+			reentrantLock.unlock();
+		}
+		private void setA(Integer a){
+			this.a = a;
+		}
+		public static void main(String[] args) {
+			PassParaByMethod r = new PassParaByMethod();
+			r.setA(10);
+			for(int i = 0; i <10; i++){
+				new Thread(r).start();
+			}
+		}
+	}
+*************************************************Use ThreadLocal******************************************************
+将ThreadLocal放在这儿并不准确，因为threadLocal无法从线程外部接收参数。
+threadLocal更多的是用于存储线程本地的参数，这些参数和生命周期和线程的生命周期一样。
+	public class PassParaByThreadLocal implements Runnable {
+		private ReentrantLock reentrantLock = new ReentrantLock();
+		private static ThreadLocal<Integer> integerLocal = new ThreadLocal<>(); 
+		@Override
+		public void run() {
+			reentrantLock.lock();
+			integerLocal.set(10);
+			Integer a = integerLocal.get();
+			for(int i = 0; i < 2; i++){
+				System.out.println(Thread.currentThread().getName() + " " + a++);
+			}
+			reentrantLock.unlock();
+		}
+		
+		public static void main(String[] args) {
+			PassParaByThreadLocal p = new PassParaByThreadLocal();
+			for(int i = 0; i < 10; i++){
+				new Thread(p).start();
+			}
+		}
+	}
 ----------------------------------------------------ThreadLocal--------------------------------------------------------------
 解析文章：https://mp.weixin.qq.com/s?__biz=MzA3MDExNzcyNA==&mid=2650392118&idx=1&sn=a2144a19bdeba48001f4f76f423e25d9&scene=0
 	public class ThreadLocalTest implements Runnable{
