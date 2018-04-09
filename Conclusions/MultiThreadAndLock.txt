@@ -438,6 +438,13 @@ public class RtLock implements Runnable {
 		乱序，因为main方法也在抢占set的资源。
 
 	如果每个线程都跑一样的业务的话，内部方法是可以不需要上锁的，如果不同的业务交织在一起，在需要对所有的临界资源（critical source）上锁。
+	
+3.通过synchronized修饰符给代码块加锁：
+	synchronized(critical resource){
+		// TODO
+	}
+	在定义接口方法时不能使用synchronized关键字。
+	构造方法不能使用synchronized关键字，但可以使用synchronized代码块来进行同步。
 
 ***总结：事实上synchronized方法是在告诉JVM，不要再将资源放在缓存中了！每次直接更新到内存中。
 		这是一种重量级的锁，每次都会导致获取不到资源的线程挂起，而挂起和恢复的过程都是用户态和内核态的切换，十分占用系统资源。
@@ -751,7 +758,113 @@ threadLocal更多的是用于存储线程本地的参数，这些参数和生命
     }
 
 ----------------------------------------------------Wait/Notify--------------------------------------------------------------
+wait, notify & notifyAll 三个方法均是Object类的方法。
+wait()方法
+	定义在Object上的方法, 是java语言级的方法, 需要在同步块或者同步方法中进行调用, 会释放锁, 并进入锁对象的等待队列, 需要等到其他线程调用notify()方法释放锁后(实际上该线程同步块运行结束后才会释放锁), 重新竞争锁.
+	调用wait()方法后，线程由RUNNING变为WAITING，并将当前线程放置于对象等待队列
+notify(),notifyAll()方法
+	调用后，等待线程依然不会从wait()方法返回，而是等调用notify(),notifyAll()的线程释放该锁之后,等待线程才有机会从wait()返回。
+	notify()方法将等待队列中的一个等待线程从等待队列中移到同步队列中，而 notifyAll()方法则是把所有等待线程从等待队列中移到同步队列中，被移动的线程的状态由WAITING变成BLOCKED。
+	
+个人总结：
+	对于一个临界资源，我们维护了三条列
+	==========================		使用队列->一般在正常的情况下，临界资源只会被一个线程使用。
+	==========================		阻塞队列->线程的状态是BLOCKED，是一种系统级别的线程状态。等待运行，说明此时的资源已经被释放。
+	==========================		等待队列->临界资源没有被释放，线程主动进入wait，等待被notify后进入阻塞队列被系统调用获取临界资源。***已测试：此时现成的状态仍然是Running的。
+	 * The current thread must own this object's monitor. The thread
+     * releases ownership of this monitor and waits until another thread
+     * notifies threads waiting on this object's monitor to wake up
+     * either through a call to the {@code notify} method or the
+     * {@code notifyAll} method. The thread then waits until it can
+     * re-obtain ownership of the monitor and resumes execution.
+	 * As in the one argument version, interrupts and spurious wakeups are
+     * possible, and this method should always be used in a loop:
+     * <pre>
+     *     synchronized (obj) {
+     *         while (&lt;condition does not hold&gt;)					//因为是多线程抢占资源，所以在获得临界资源到据需运行的过程该值可能已经被修改了，利用while在进行一次判断
+     *             obj.wait();
+     *         ... // Perform action appropriate to condition
+     *     }
+	 
+	一个线程从wait到运行的途径：
+	1.从等待队列进入阻塞队列，等待被CPU分配资源
+	2.从阻塞态进入运行态，获取资源并运行。
 
+实例：
+	public class WaitNotifyTest {
+		private static Object cr = new Object();
+		private static Boolean block = true;
+		
+		static class Wait implements Runnable{
+			public void run() {
+				synchronized (cr) {																			//获取了资源，但是可能当前资源还需要别的线程进行处理
+					while(block){																			//判断当前的资源是不是已经和预期的一致。是的话可以跳出循环。
+						System.out.println(Thread.currentThread().getName() + " " + " entering waiting");
+						try {
+							cr.wait();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					System.out.println(Thread.currentThread().getName() + " :do service");					//数据已经被处理，继续执行业务。
+				}
+			}
+		}
+		static class Notify implements Runnable{
+			public void run() {
+				synchronized (cr) {
+					cr.notifyAll();																			//通知正在等待的队列资源已经准备完毕
+					System.out.println(Thread.currentThread().getName() + " " + "notify");					//此处仍没有释放临界资源
+					block = false;																			//修改条件，允许退出循环
+				}
+			}
+		}
+		public static void main(String[] args) throws InterruptedException {
+			Wait wait = new Wait();
+			new Thread(wait).start();
+			Thread.sleep(10);
+			Notify notify = new Notify();
+			new Thread(notify).start();
+		}
+	}
+	
+	***现象：debug模式下synchronized代码块退出的时候会再次运行到synchronized块，应该是一个释放锁的过程。
+实例：
+	public class WaitNotifyTest1 {
+		private static  Integer mutex = 0;
+		
+		static class Wait implements Runnable{
+			public void run() {
+				synchronized (mutex) {
+					while(mutex != 1){																		//直到mutex变成1我们才会继续处理业务
+						System.out.println(Thread.currentThread().getName() + " " + " entering waiting");
+						try {
+							mutex.wait();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					System.out.println(Thread.currentThread().getName() + " mutex= " + ++mutex);
+				}
+			}
+		}
+		static class Notify implements Runnable{
+			public void run() {
+				synchronized (mutex) {
+					mutex.notify();
+					System.out.println(Thread.currentThread().getName() + " " + "notify");
+					mutex = 1;
+				}
+			}
+		}
+		public static void main(String[] args) throws InterruptedException {
+			Wait wait = new Wait();
+			new Thread(wait).start();
+			Thread.sleep(10);
+			Notify notify = new Notify();
+			new Thread(notify).start();
+		}
+	}
 ----------------------------------------------------Affinity-----------------------------------------------------------------
 
 	
