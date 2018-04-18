@@ -1,0 +1,114 @@
+--------------------------------------------------------Annotation总结-----------------------------------------------------
+在通过Springboot编写SeanforfunBlog的时候，我大量接触Spring4.x的注解，在一开始学习java的时候我只是粗略的学习了注解的开发和使用，这导致我在对比Spring3.x和Spring4.x的过程中出现了大量的不理解，花费了大量的时间。而从servlet2.5到servlet3.0的升级中，完全抛弃了web.xml的配置而是转为注解式开发更坚定了我想要对注解的研究。所谓磨刀不误砍柴工，我决定暂时停下手上所有的事情从JAVA基础上研究Annotation的原理。
+内容摘自：
+原文链接： idlebrains 翻译： ImportNew.com - 人晓
+译文链接： http://www.importnew.com/10294.html
+
+1.Annotations仅仅是元数据，和业务逻辑无关。
+2.创建一个Annotation:
+	@Target(ElementType.METHOD)
+	@Retention(RetentionPolicy.SOURCE)
+	public @interface myAnnotation {
+	}
+	
+	其中：
+		@Documented–一个简单的Annotations标记注解，表示是否将注解信息添加在java文档中。
+		@Retention– 定义该注解的生命周期。
+			RetentionPolicy.SOURCE – 在编译阶段丢弃。这些注解在编译结束之后就不再有任何意义，所以它们不会写入字节码。@Override, @SuppressWarnings都属于这类注解。
+			RetentionPolicy.CLASS – 在类加载的时候丢弃。在字节码文件的处理中有用。注解默认使用这种方式。
+			RetentionPolicy.RUNTIME– 始终不会丢弃，运行期也保留该注解，因此可以使用反射机制读取该注解的信息。我们自定义的注解通常使用这种方式。
+		@Target – 表示该注解用于什么地方。如果不明确指出，该注解可以放在任何地方。以下是一些可用的参数。需要说明的是：属性的注解是兼容的，如果你想给7个属性都添加注解，仅仅排除一个属性，那么你需要在定义target包含所有的属性。
+			ElementType.TYPE:用于描述类、接口或enum声明
+			ElementType.FIELD:用于描述实例变量
+			ElementType.METHOD
+			ElementType.PARAMETER
+			ElementType.CONSTRUCTOR
+			ElementType.LOCAL_VARIABLE
+			ElementType.ANNOTATION_TYPE 另一个注释
+			ElementType.PACKAGE 用于记录java文件的package信息
+		@Inherited – 定义该注释和子类的关系
+			@Inherited 元注解是一个标记注解，@Inherited阐述了某个被标注的类型是被继承的。如果一个使用了@Inherited修饰的annotation类型被用于一个class，则这个annotation将被用于该class的子类。
+			注意：@Inherited annotation类型是被标注过的class的子类所继承。类并不从它所实现的接口继承annotation，方法并不从它所重载的方法继承annotation。
+			
+3.定义注解的内部属性：Annotations只支持基本类型、String及枚举类型。
+	@Target(ElementType.METHOD)
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface Todo {
+	public enum Priority {LOW, MEDIUM, HIGH}
+	public enum Status {STARTED, NOT_STARTED}
+	String author() default "Yash";
+	Priority priority() default Priority.LOW;
+	Status status() default Status.NOT_STARTED;
+	}
+	使用：
+	@Todo(priority = Todo.Priority.MEDIUM, author = "Yashwant", status = Todo.Status.STARTED)
+	public void incompleteMethod1() {
+	//Some business logic is written
+	//But it’s not complete yet
+	}
+	
+4.注解的调用：
+	对注解的调用是基于反射的机制，我们可以通过类名、方法和实例变量对象所提供的getAnnotation方法来对Annotation进行调用。
+		public class Parent<T> {  
+	  
+		private Class<T> entity;  
+	  
+		public Parent() {  
+			init();  
+		}  
+	  
+		@SuppressWarnings("unchecked")  
+		public List<SortableField> init(){  
+			List<SortableField> list = new ArrayList<SortableField>();  
+			/**getClass().getGenericSuperclass()返回表示此 Class 所表示的实体（类、接口、基本类型或 void） 
+			 * 的直接超类的 Type(Class<T>泛型中的类型)，然后将其转换ParameterizedType。。 
+			 *  getActualTypeArguments()返回表示此类型实际类型参数的 Type 对象的数组。 
+			 *  [0]就是这个数组中第一个了。。 
+			 *  简而言之就是获得超类的泛型参数的实际类型。。*/  
+			entity = (Class<T>)((ParameterizedType)this.getClass().getGenericSuperclass())  
+					.getActualTypeArguments()[0];  
+	//      FieldMeta filed = entity.getAnnotation(FieldMeta.class);  
+			  
+			if(this.entity!=null){  
+				  
+				/**返回类中所有字段，包括公共、保护、默认（包）访问和私有字段，但不包括继承的字段 
+				 * entity.getFields();只返回对象所表示的类或接口的所有可访问公共字段 
+				 * 在class中getDeclared**()方法返回的都是所有访问权限的字段、方法等； 
+				 * 可看API 
+				 * */  
+				Field[] fields = entity.getDeclaredFields();  
+	//            
+				for(Field f : fields){  
+					//获取字段中包含fieldMeta的注解  
+					FieldMeta meta = f.getAnnotation(FieldMeta.class);  
+					if(meta!=null){  
+						SortableField sf = new SortableField(meta, f);  
+						list.add(sf);  
+					}  
+				}  
+				  
+				//返回对象所表示的类或接口的所有可访问公共方法  
+				Method[] methods = entity.getMethods();  
+				  
+				for(Method m:methods){  
+					FieldMeta meta = m.getAnnotation(FieldMeta.class);  
+					if(meta!=null){  
+						SortableField sf = new SortableField(meta,m.getName(),m.getReturnType());  
+						list.add(sf);  
+					}  
+				}  
+				//这种方法是新建FieldSortCom类实现Comparator接口，来重写compare方法实现排序  
+	//          Collections.sort(list, new FieldSortCom());  
+				Collections.sort(list, new Comparator<SortableField>() {  
+					@Override  
+					public int compare(SortableField s1,SortableField s2) {  
+						return s1.getMeta().order()-s2.getMeta().order();  
+	//                  return s1.getName().compareTo(s2.getName());//也可以用compare来比较  
+					}  
+					  
+				});  
+			}  
+			return list;  
+			  
+		}  
+	} 
