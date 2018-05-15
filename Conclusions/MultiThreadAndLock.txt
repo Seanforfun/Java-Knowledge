@@ -222,6 +222,7 @@ Five States in life cycle:
 
 --------------------------------------------------ThreadControl--------------------------------------------------------------
 1.join:Thread提供了让一个线程等待另一个线程完成的方法join()方法。当在某个程序执行流中调用其他线程的join()方法时，调用线程将被阻塞，直到被join()方法加入的join线程执行完为止。join()方法通常由使用线程的程序调用，以将大问题划分成许多小问题，每个小问题分配一个线程。当所有的小问题都得到处理后，再调用主线程来进一步操作。
+
 	public static void main(String[] args) throws Exception {
       // 启动子线程
       new JoinThread("新线程").start();
@@ -236,6 +237,9 @@ Five States in life cycle:
          System.out.println(Thread.currentThread().getName() + "" + i);
       }
    }
+   
+   ->在A线程中调用B线程的join方法，A线程会等待B线程完成后再继续执行；
+	ca.mcmaster.multithread.threadcontroll.JoinTestThread
 2.setDeamon:设置为守护线程：
     public class DaemonThread extends Thread {
        // 定义后台线程的线程执行体与普通线程没有任何区别

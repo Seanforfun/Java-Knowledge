@@ -18,3 +18,22 @@ SQL总结：
 	右向外联接是左向外联接的反向联接。将返回右表的所有行。如果右表的某行在左表中没有匹配行，则将为左表返回空值。      
 	3）FULL  JOIN 或 FULL OUTER JOIN
 	完整外部联接返回左表和右表中的所有行。当某行在另一个表中没有匹配行时，则另一个表的选择列表列包含空值。如果表之间有匹配行，则整个结果集行包含基表的数据值。 
+	
+----------------------------------------------------------------------------Trigger-------------------------------------------------------------------------------
+CREATE TRIGGER trigger_name trigger_time trigger_event ON tb_name FOR EACH ROW trigger_stmt
+trigger_name：触发器的名称
+tirgger_time：触发时机，为BEFORE或者AFTER
+trigger_event：触发事件，为INSERT、DELETE或者UPDATE
+tb_name：表示建立触发器的表明，就是在哪张表上建立触发器
+trigger_stmt：触发器的程序体，可以是一条SQL语句或者是用BEGIN和END包含的多条语句
+所以可以说MySQL创建以下六种触发器：
+BEFORE INSERT,BEFORE DELETE,BEFORE UPDATE
+AFTER INSERT,AFTER DELETE,AFTER UPDATE
+
+创建有多个执行语句的触发器	
+	CREATE TRIGGER 触发器名 BEFORE|AFTER 触发事件
+	ON 表名 FOR EACH ROW
+	BEGIN
+		执行语句列表
+	END
+
