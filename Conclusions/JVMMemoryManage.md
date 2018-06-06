@@ -37,3 +37,32 @@
 6. 直接内存（Direct Memory）
 > 为了避免在Java堆和Native堆中来回复制数据而使用的堆外内存。
 > 在NIO中被使用。
+
+### 对象访问
+> 对象的访问会涉及java栈，java堆，方法区三个区域。
+```Java
+Object obj = new Object();
+```
+1. `Object obj`会反应到Java栈的本地变量表中，作为一个reference类型数据出现。可以理解为在Java栈中存储了一个指针。
+2. `new Object()`将会在Java堆中开辟一块空间，存储Object实例。
+3. 在方法区中存储了对象的类型数据（对象类型，父类，实现的接口，方法等）。
+	* 通过句柄存储
+	![句柄访问对象](https://i.imgur.com/G4W4vqf.png)
+	* 通过指针访问
+	![指针访问对象](https://i.imgur.com/dpg3RYy.png)
+
+### Java内存溢出
+* 通过Eclispe Menmory Analyzer，可以分析出内存泄露的位置
+* 通过减少内存的手段来判断何处造成内存溢出。
+```
+-Dfile.encoding=UTF-8    
+-Xms20m -Xmx20m ##设置堆大小20m，并将最小和最大值设置相等，避免扩展
+-XX:+HeapDumpOnOutOfMemoryError ##dump出当前的内存堆转储快照
+-XX:HeapDumpPath=E:\job   ##指定路径(转储文件还是挺大的)
+-XX:SurvivorRatio=8    ## 存活比2:8
+```
+
+![Eclispe Menmory Analyzer](https://i.imgur.com/DfWsc7G.png)
+
+### Reference
+1. [深入理解JVM](https://book.douban.com/subject/6522893/)
