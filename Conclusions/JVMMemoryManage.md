@@ -64,5 +64,55 @@ Object obj = new Object();
 
 ![Eclispe Menmory Analyzer](https://i.imgur.com/DfWsc7G.png)
 
+### 通过Unsafe分配内存(Very Bad!!!)
+```Java
+	public static void main(String[] args) throws Exception{
+		Field f = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+		f.setAccessible(true);
+		sun.misc.Unsafe unsafe = (sun.misc.Unsafe) f.get(null);
+		long allocateMemory = unsafe.allocateMemory(_1MB);
+		System.out.println(Long.toHexString(allocateMemory));
+		unsafe.freeMemory(allocateMemory);
+	}
+```
+>类似于C语言中的malloc和free。
+
+### 垃圾收集器与内存分配策略
+* 垃圾收集的三个问题
+1. 什么内存需要回收
+2. 什么时候回收
+3. 如何回收
+
+* 程序计数器，Java栈和本地方法区是线程私有的，和线程的生命周期一致。
+	* 这三块区域在编译完成后的大小基本已经确定。
+* Java堆和方法区
+	* 对象实例的大小是无法确定的。
+	* 方法区中的循环，分支造成的方法区所占的大小是无法确定的。
+	* 垃圾收集器关注的就是这两块区域。
+
+### 如何确定对象的区域是否仍然存活
+#### 引用计数算法（JVM使用的并不是该方法）
+1. 给对象添加一个引用计数器，当被引用时就加1，引用失效时就减1。
+2. 缺陷：两个未失效的对象相互引用，都未失效但是变成了野指针。
+```Java
+	ObjA.instance = ObjB;
+	ObjB.instance = ObjA;
+```
+由于两个对象相互引用，rc均不为0，但实际上都是游离的对象。
+3. [Linux使用jstat命令查看jvm的GC情况](https://blog.csdn.net/zlzlei/article/details/46471627)
+
+#### 根搜索算法（JVM使用的方法）
+>通过一系列“GC ROOT”对象作为起始点，从这些结点开始向下搜索，搜索所走过的路径被称为引用链（Reference Chain）,当一个对象到所有GC ROOTS均不可达，说明是游离对象，可以被清理。
+
+* 可以作为GC Root的对象：
+1. JVM栈中的引用对象。（线程没有消亡时，是一个reference）
+2. 方法区中的类静态属性引用的对象。（静态变量的reference，引用存储在方法区）
+	`public static Integer i = new Integer(1);`
+3. 方法区中的常量引用的对象。
+	`private final Double PI = 3.1415D;`
+4. 本地方法栈中引用对象。（Native 方法）
+
+#### 引用
+
 ### Reference
 1. [深入理解JVM](https://book.douban.com/subject/6522893/)
