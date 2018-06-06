@@ -99,6 +99,7 @@ Object obj = new Object();
 	ObjB.instance = ObjA;
 ```
 由于两个对象相互引用，rc均不为0，但实际上都是游离的对象。
+
 3. [Linux使用jstat命令查看jvm的GC情况](https://blog.csdn.net/zlzlei/article/details/46471627)
 
 #### 根搜索算法（JVM使用的方法）
@@ -112,7 +113,52 @@ Object obj = new Object();
 	`private final Double PI = 3.1415D;`
 4. 本地方法栈中引用对象。（Native 方法）
 
+### 获取GC日志
+```Java
+    -Xms20m --jvm堆的最小值
+    -Xmx20m --jvm堆的最大值
+    -XX:+PrintGCTimeStamps -- 打印出GC的时间信息
+    -XX:+PrintGCDetails  --打印出GC的详细信息
+    -verbose:gc --开启gc日志
+    -Xloggc:d:/gc.log -- gc日志的存放位置
+    -Xmn10M -- 新生代内存区域的大小
+    -XX:SurvivorRatio=8 --新生代内存区域中Eden和Survivor的比例
+```
+
 #### 引用
+* 强引用（Strong Reference）
+	* "Object obj = new Object()",只要强引用存在，内存不会被回收。
+	* 强引用有引用变量指向时永远不会被垃圾回收，JVM宁愿抛出OutOfMemory错误也不会回收这种对象。
+	* 如果想中断强引用和某个对象之间的关联，可以显示地将引用赋值为null，这样一来的话，JVM在合适的时间就会回收该对象。
+* 软引用（Soft Reference）
+	* 此处的软引用，因为一只调用了gc所以不会造成爆堆
+```Java
+public class GCCollection {
+	private static Byte[] bytes = new Byte[1024 *1024];
+	public static void main(String[] args) throws InterruptedException {
+		List<SoftReference<Byte[]>> l = new LinkedList<SoftReference<Byte[]>>();
+		while(true){
+			l.add(new SoftReference<Byte[]>(bytes));
+			System.gc();
+		}
+	}
+}
+```
+	* 换成强引用，即使不断调用gc仍然会爆堆
+```Java
+public class GCCollection {
+	private static Byte[] bytes = new Byte[1024 *1024];
+	public static void main(String[] args) throws InterruptedException {
+		List<Byte[]> l = new LinkedList<Byte[]>();
+		while(true){
+			l.add(new Byte[1024 *1024]);
+			System.gc();
+		}
+	}
+}
+Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
+	at ca.mcmaster.jvm.GCCollection.main(GCCollection.java:17)
+```
 
 ### Reference
 1. [深入理解JVM](https://book.douban.com/subject/6522893/)
