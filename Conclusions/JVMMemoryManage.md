@@ -131,7 +131,12 @@ Object obj = new Object();
 	* 强引用有引用变量指向时永远不会被垃圾回收，JVM宁愿抛出OutOfMemory错误也不会回收这种对象。
 	* 如果想中断强引用和某个对象之间的关联，可以显示地将引用赋值为null，这样一来的话，JVM在合适的时间就会回收该对象。
 * 软引用（Soft Reference）
-	* 此处的软引用，因为一只调用了gc所以不会造成爆堆
+	* 软引用说明某些引用仍然有用，但并非必要对象。在发生内存溢出前，会将这些引用列入回收范围进行二次回收。使用SoftReference实现。
+	* 此处的软引用，因为一只调用了gc所以不会造成爆堆。
+* 弱引用（Weak Reference）
+	* 弱引用的等级比软引用还要低，对象生存时间只会存在到下一次垃圾回收。可以通过WeakReference实现，生存周期较软引用较短。
+* 虚引用（Phantom Reference）
+	* 虚引用是无法获取实例对象的。设置虚引用的唯一原因是希望这个对象在被回收时收到一个通知。通过Phantom Reference生成实例对象。
 ```Java
 public class GCCollection {
 	private static Byte[] bytes = new Byte[1024 *1024];
@@ -159,6 +164,60 @@ public class GCCollection {
 Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 	at ca.mcmaster.jvm.GCCollection.main(GCCollection.java:17)
 ```
+	* 换做弱引用，调用System.gc()会回收掉弱引用的对象
+```Java
+public class GCCollection {
+	private static Byte[] bytes = new Byte[1024 *1024];	//1Mb
+	@SuppressWarnings("static-access")
+	public static void main(String[] args) throws InterruptedException {
+		List<WeakReference<Byte[]>> l = new LinkedList<WeakReference<Byte[]>>();
+		int i = 100;
+		while(i-- > 0){
+			l.add(new WeakReference<>(bytes));
+			System.gc();
+			Thread.currentThread().sleep(1000);
+		}
+	}
+}
+```
+
+	* 从垃圾回收日志中可以获取一些信息,可以看到回收了10240K，即为1MB。
+```
+0.121: [GC (System.gc()) [PSYoungGen: 5243K->648K(9216K)] 5243K->4752K(19456K), 0.0054301 secs] [Times: user=0.00 sys=0.00, real=0.01 secs] 
+0.127: [Full GC (System.gc()) [PSYoungGen: 648K->0K(9216K)] [ParOldGen: 4104K->4631K(10240K)] 4752K->4631K(19456K), [Metaspace: 2737K->2737K(1056768K)], 0.0065591 secs] [Times: user=0.05 sys=0.00, real=0.01 secs]
+```
+
+### 什么样的空间要被宣布死亡
+* 要被垃圾回收的内存要被标记两次
+	* 根搜索后发现对象和GC Roots没有引用链。此时他们会被标记并进行一次筛选。
+	* 第二次标记，如果经过了上一次的标记，将会把对象放在F-Queue中，并在稍后由一条由虚拟机自动建立，低优先级的Finalizer线程去执行。在执行对象回收的finalize方法（如果存在），如果没有重新构成引用链，就会被垃圾收集。
+
+```Java
+public class GCCollection {
+	private Byte[] bytes = new Byte[1024 *1024];	//1Mb
+	@SuppressWarnings("static-access")
+	private static GCCollection HOOK = null;
+	public static void main(String[] args) throws InterruptedException {
+		HOOK = new GCCollection();
+		HOOK = null;	//Detach the instance, call gc to collect the detached instance.
+		System.gc();
+		Thread.sleep(5000);
+		System.out.println(HOOK);	//Find the instance is still alive.
+	}
+	@Override
+	protected void finalize() throws Throwable {
+		// TODO Auto-generated method stub
+		System.out.println("enter finalize process...");
+		super.finalize();
+		HOOK = this;	//enter the finalize step and create a reference chain.
+		System.out.println("I am still alive...");
+	}
+}
+enter finalize process...
+I am still alive...
+ca.mcmaster.jvm.GCCollection@15db9742
+```
+
 
 ### Reference
 1. [深入理解JVM](https://book.douban.com/subject/6522893/)
