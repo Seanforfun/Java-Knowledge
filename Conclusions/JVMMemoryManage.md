@@ -29,6 +29,7 @@
 5. 方法区（Method Area）
 > 线程的共享区域。
 > 存储类信息，常量，静态变量即时编译器编译后的代码。
+> 在HotSpot的一些版本中，方法区的空间被定义为Permanent Generation（永久代）。
 
 5.1. 运行时常量池(Runtime constant pool)
 > 运行时常量池是方法区的一部分。
@@ -217,6 +218,27 @@ enter finalize process...
 I am still alive...
 ca.mcmaster.jvm.GCCollection@15db9742
 ```
+
+### Garbage collection algorithm
+#### Mark-sweep 标记-清除
+1. Mark the instance that can be sweeped.
+2. Clear garbage instance in F-Queue.
+* Disadvantage
+	1. Low efficiency.
+	2. Cause a lot of unconnected memory.
+
+#### Copying 复制算法
+1. Copying用于回收新生代，新生代的对象朝生夕死，将新生代分配成两块Eden,Survivor(From, to)。
+2. 将仍然存活的instance从Eden复制到Survivor上，然后将Eden全部清空。
+
+#### Mark-Compact 标记-整理算法
+1. 和Mark-sweep类似，但是不是直接清除，而是将存活的一端，直接清理掉边界以外的内存。
+
+#### Generation Collection 分代处理算法
+![Heap Generation](https://i.imgur.com/EEGQTEC.jpg)
+1. 根据对象的存活周期的不同将内存划分成不同的区域，根据每个区域采取适当的垃圾收集算法。
+2. 新生代中使用复制算法。
+3. 老年代中使用标记-清除和标记-整理算法。
 
 
 ### Reference

@@ -28,6 +28,5 @@ Save my conclusions different aspect of Java.
 * [Spring MVC总结](https://github.com/Seanforfun/ItcastLearningSmallDemos/blob/master/2018-04-01springmvc/SpringMVC%E6%80%BB%E7%BB%93.txt)
 
 ## JVM
-### 内存管理机制
-* [JVM中的空间](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JVMMemoryManage.md)
+* [内存管理机制](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JVMMemoryManage.md)
 
