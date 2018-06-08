@@ -232,13 +232,65 @@ ca.mcmaster.jvm.GCCollection@15db9742
 2. 将仍然存活的instance从Eden复制到Survivor上，然后将Eden全部清空。
 
 #### Mark-Compact 标记-整理算法
-1. 和Mark-sweep类似，但是不是直接清除，而是将存活的一端，直接清理掉边界以外的内存。
+1. 和Mark-sweep类似，但是不是直接清除，而是将存活的实例复制到一端，直接清理掉边界以外的内存。
 
 #### Generation Collection 分代处理算法
 ![Heap Generation](https://i.imgur.com/EEGQTEC.jpg)
 1. 根据对象的存活周期的不同将内存划分成不同的区域，根据每个区域采取适当的垃圾收集算法。
 2. 新生代中使用复制算法。
 3. 老年代中使用标记-清除和标记-整理算法。
+
+### GC 垃圾收集器
+>收集算法是内存回收的方法论，垃圾收集器就是内存回收的具体实现。
+
+#### Serial收集器
+1. 这是一个单线程收集器。
+2. 在垃圾收集的时候，必须暂停其他所有的工作线程，直到他收集结束。
+![Serial收集流程](https://i.imgur.com/9Y6zepM.jpg)
+
+#### ParNew收集器
+1. 这是Serial收集器的多线程版本。
+![ParNew收集器](https://i.imgur.com/XJkL8z1.jpg)
+
+#### Parallel Scavenge收集器
+1. 新生代收集器，使用标记复制算法，并行的多线程收集器。
+2. 达到可控制的吞吐量(throughput)。
+3. 高吞吐量适用于后台大量运算，少用户交互的服务。
+> throughput = code_runtime / (code_runtime + garbage_collection_time)
+
+ -XX:MaxGCPauseMillis：控制最大垃圾收集停顿时间，大于零的毫秒数。
+ -XX:GCTimeRatio：吞吐量大小，0到100的整数，垃圾收集时间占总时间的比例，计算1/（1+n）gc时间占用比例。
+ -XX:UseAdaptiveSizePolicy：打开之后，就不需要设置新生代大小（-Xmn），Edian，survivor比例及（-XX:SurvivorRatio）晋升老年代年龄（-XX:PretenureSizeThreshold），虚拟机根据系统运行状况，调整停顿时间，吞吐量，GC自适应调节策略，区别parnew。
+
+#### Serial Old收集器
+1. 收集器的老年版本，他是一个单线程收集器，使用标记-整理方法。
+2. 具体流程见图3-6。
+
+#### Parallel Old收集器
+1. Parallel Old收集器是Parallel Scavenge的老年代版本。多使用标记-整理算法。
+![Parallel Old收集器](https://i.imgur.com/uzmnetq.jpg)
+
+#### CMS收集器（Concurrent Mark Sweep）
+1. 以获取最短停顿时间为目标。重视响应速度。
+2. 分成四个步骤：
+	* 初始标记 （CMS Initial Mark）
+	* 并发标记 (CMS Concurrent Mark)
+	* 重新标记（CMS remark）
+	* 并发清除（CMS Concurrent Sweep）
+![CMS收集器](https://i.imgur.com/09iVQPI.jpg)
+> 其中初始标记和重新标记会Stop the world.
+
+3. CMS默认的启动的回收线程数：（CPU# + 3）/4。其中，当CPU核数少于4时，CMS的吞吐量就会下降。
+4. 无法处理浮动垃圾（Floating Garbage）,即在标记阶段未产生，此类垃圾必须等到下一次清理时被标记再次清理。
+5. 默认的值是老年代的内存占满了68%后就会开始清理，实际中可以通过指令调高比例，但是有可能造成Concurrent Mode Failure。-XX:CMSInitiatingOccupancyFraction
+6. 因为是基于标记-清理的，所以会产生不连续的内存，会为分配大内存对象造成影响。不得不提前触发一次Full GC。
+![解决内存碎片问题](https://i.imgur.com/gVbQVla.jpg)
+
+#### G1 收集器
+1. 基于标记-整理算法。使用了区域划分和优先级回收。是最先进的垃圾收集算法。
+
+### 收集器的参数设置
+![收集器的参数设置](https://i.imgur.com/EfKLWdj.jpg)
 
 
 ### Reference
