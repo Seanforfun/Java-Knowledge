@@ -292,6 +292,58 @@ ca.mcmaster.jvm.GCCollection@15db9742
 ### 收集器的参数设置
 ![收集器的参数设置](https://i.imgur.com/EfKLWdj.jpg)
 
+### Memory allocation（内存分配）
+#### 对象的实例在堆上分配。
+1. 对象优先在新生代Eden区上分配。当Eden区没有足够的空间会发生一次Minor GC。
+	* Minor GC:新生代GC，发生在新生代，很频繁，速度也快。
+	* Major GC/Full GC:老年代GC，发生在老年代，经常会伴随新生代GC。
+```Java
+/**
+ * @author SeanForFun E-mail:xiaob6@mcmaster.ca
+ * @date Jun 6, 2018 5:21:16 PM
+ * @version 1.0
+ * -Xms20m
+ * -Xmx20m
+ * -Xmn10M
+ * -XX:+PrintGCTimeStamps 
+ * -XX:+PrintGCDetails
+ * -verbose:gc
+ * -Xloggc:f:/dump/dc.log
+ * -XX:SurvivorRatio=8
+ * -XX:PretenureSizeThreshold=3145728
+ */
+public class GCCollection {
+	private final static int _1MB = 1024 * 1024;
+//	private Byte[] bytes = new Byte[1024 *1024];	//1Mb
+	public static void main(String[] args) throws InterruptedException {
+		byte[] a1 = new byte[2 * _1MB];
+		byte[] a2 = new byte[2 * _1MB];
+		byte[] a3 = new byte[2 * _1MB];
+		byte[] a5 = new byte[2 * _1MB];
+		byte[] a6 = new byte[4 * _1MB];
+		byte[] a7 = new byte[4 * _1MB];
+	}
+}
+/*GClog
+0.124: [GC (Allocation Failure) [PSYoungGen: 7291K->664K(9216K)] 7291K->6816K(19456K), 0.0043880 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+0.128: [Full GC (Ergonomics) [PSYoungGen: 664K->0K(9216K)] [ParOldGen: 6152K->6677K(10240K)] 6816K->6677K(19456K), [Metaspace: 2699K->2699K(1056768K)], 0.0049759 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+0.134: [Full GC (Ergonomics) [PSYoungGen: 6302K->4096K(9216K)] [ParOldGen: 6677K->8724K(10240K)] 12979K->12820K(19456K), [Metaspace: 2699K->2699K(1056768K)], 0.0048303 secs] [Times: user=0.06 sys=0.00, real=0.00 secs]
+0.139: [Full GC (Allocation Failure) [PSYoungGen: 4096K->4096K(9216K)] [ParOldGen: 8724K->8712K(10240K)] 12820K->12808K(19456K), [Metaspace: 2699K->2699K(1056768K)], 0.0060969 secs] [Times: user=0.00 sys=0.00, real=0.01 secs]*/
+```
+
+2. 大对象直接在直接进入老年代
+	* 所谓的大对象就是需要占用大量连续内存的对象。
+	* 作为程序员，我们要避免生成生存周期很短的大对象，这要对GC的要求很高。
+
+3. 长期存活的对象将进入老年代
+	* 虚拟机会分配给每一个对象一个年龄计数器。在新生代中，每在Survive区存货一个就会增加1，当他的年龄到达15就会被晋升到老年代。-XX:InitialTenuringThreshold=1
+
+### 使用Java VisualVM来对JVM进行监控
+![Java Visual](https://i.imgur.com/x7mWu0K.jpg)
+>监视CPU活动状况和堆的使用状况。
+
+### 在linux中使用jstat -l pid来获得进程堆栈的快照。
+![snapshot](https://i.imgur.com/6fXLhB9.jpg)
 
 ### Reference
 1. [深入理解JVM](https://book.douban.com/subject/6522893/)
