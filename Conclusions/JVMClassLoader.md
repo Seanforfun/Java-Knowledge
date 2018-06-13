@@ -51,3 +51,26 @@
 	* 名称引索（name index）
 	* 描述符引索（descriptor index）
 	* 属性集合表（attributes）
+
+#### 属性集合表
+1. 在Class文件，字段表，方法表都可以携带自己的属性表集合。
+![虚拟机规范](https://i.imgur.com/VN8VAzw.jpg)
+* Code属性
+	* Javac编译器处理Java程序，最终变成字节码指令存在Code属性中。
+	* 只有方法的实体才会具有Code属性，而接口和抽象类中的一些方法就没有Code属性。
+* Exception属性
+	* Exception属性列出方法的可能的受查异常。
+* LineNumberTable属性
+	* 它用于描述Java源码行号与字节码行号之间的对应关系。
+* LocalVariableTable属性
+	* 它用于描述栈帧中局部变量表中的变量与Java源码中定义的变量之间的对应关系。
+* SourceFile属性
+	* 它用于记录生成这个Class文件的源码文件名称。
+* ConstantValue属性
+	* ConstantValue属性的作用是通知虚拟机自动为静态变量赋值，只有被static修饰的变量才可以使用这项属性。
+* InnerClasses属性
+	*  该属性用于记录内部类与宿主类之间的关联。如果一个类中定义了内部类，那么编译器将会为它及它所包含的内部类生成InnerClasses属性。
+* Deprecated属性
+	* 该属性用于表示某个类、字段和方法，已经被程序作者定为不再推荐使用，它可以通过在代码中使用@Deprecated注释进行设置。
+* Synthetic属性
+	* 该属性代表此字段或方法并不是Java源代码直接生成的，而是由编译器自行添加的，如this字段和实例构造器、类构造器等。

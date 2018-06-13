@@ -14,8 +14,8 @@
 ### Condition的使用
 ```Java
 public class LocksTest implements Runnable{
-//	ReentrantLock fairLock = new ReentrantLock(true);			
-	private final ReentrantLock unfairLock;					
+//	ReentrantLock fairLock = new ReentrantLock(true);
+	private final ReentrantLock unfairLock;
 	private final Condition lockCondition;
 	private final Condition lockCondition1;
 	@Override
