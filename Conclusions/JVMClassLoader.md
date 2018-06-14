@@ -135,4 +135,86 @@
 
 	* <clinit>()方法
 		* <clinit>()方法是由编译器自动收集类中的所有静态变量的赋值动作和静态语句块（static{}）产生的。
-		* JVM会保证父类的<clinit>()方法优先于子类的<clinit>()执行
+		* JVM会保证父类的<clinit>()方法优先于子类的<clinit>()执行。
+
+### ClassLoader类加载器
+> 虚拟机设计团队把类加载阶段中“通过一个类的全限定名来描述此类的二进制字节流”这个动作放到JVM外部去实现，以便让程序自己决定如何去获取所需的类。实现这个动作的代码模块被称为“类加载器”。
+
+1. 对于任意一个类，都需要由加载它的类加载器和这个类本身一同确立其在JVM中的唯一性。
+```Java
+public class ClassLoaderTest extends ClassLoader{
+	@Override
+	public Class<?> loadClass(String name) throws ClassNotFoundException {
+		String filename = name.substring(name.lastIndexOf('.') + 1) + ".class";
+		InputStream is = getClass().getResourceAsStream(filename);	//获取类名，并获取其二进制文本
+		if(is == null)
+			return super.loadClass(name);
+		try {
+			byte[] b = new byte[is.available()];
+			is.read(b);	//Read the class binary file into the byte array.
+			return defineClass(name, b, 0, b.length);	//Use the binary saved in the byte array to create a new class.
+		} catch (IOException e) {
+			throw new ClassNotFoundException();
+		}
+	}
+	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+		ClassLoaderTest classLoader = new ClassLoaderTest();
+		Object object = classLoader.loadClass("ca.mcmaster.jvm.classloader.ClassLoaderTest").newInstance();
+		System.out.println(object.getClass());
+		System.out.println(object instanceof ca.mcmaster.jvm.classloader.ClassLoaderTest);
+	}
+}
+```
+
+#### 双亲委派模型（Parents Delegation Model）
+* 从JVM的角度讲，只存在两种类加载器：
+	* 启动类加载器（BootstrapLoader），通过C++实现，是虚拟机的一部分。
+	* 其他类加载器，是通过Java语言写成，独立于JVM外部，全部继承自抽象类java.lang.ClassLoader。
+
+* 从Java程序员的角度，类加载器分成三种：
+	* 启动类加载器(Bootstrap Classloader):这个类加载器将存储在<JAVA_HOME>/lib中，可以被JVM识别的类，加载到JVM中，无法被Java程序直接引用。
+	* 扩展类加载器(Extension Classloader):负责加载<JAVA_HOME>/lib/ext，开发者可以直接引用。
+	* 应用程序加载器(Application Classloader):一般称为系统加载器，如果程序员没有定义过自己的类的加载器，这就是程序中的默认加载器。
+![Parents Delegation Model](https://i.imgur.com/4tZ3sAE.jpg)
+
+* Proccess of Parent Delegation Model
+> 如果一个类加载器收到了加载类的请求，他首先不会自己尝试去加载这个类，而是把这个请求委派给父类加载器去完成。只有当父类加载器反馈自己无法完成这个请求，子类加载器才会去尝试加载。
+
+```Java
+protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException
+    {
+        synchronized (getClassLoadingLock(name)) {
+            // First, check if the class has already been loaded
+            Class<?> c = findLoadedClass(name);	//首先判断当前类是否已经被加载到JVM中，如果没有加入则开始使用类加载器加载。
+            if (c == null) {
+                long t0 = System.nanoTime();
+                try {
+                    if (parent != null) {
+                        c = parent.loadClass(name, false);	//递归调用上层的类加载器，例如使用extension classloader。
+                    } else {
+                        c = findBootstrapClassOrNull(name);	//如果已经到了最上层的类加载器，则使用Bootstrap classloader。
+                    }
+                } catch (ClassNotFoundException e) {
+                    // ClassNotFoundException thrown if class not found
+                    // from the non-null parent class loader
+                }
+
+                if (c == null) {
+                    // If still not found, then invoke findClass in order
+                    // to find the class.
+                    long t1 = System.nanoTime();
+                    c = findClass(name);	//如果最终仍然没有加载到类，则使用findClass进行类加载。
+
+                    // this is the defining class loader; record the stats
+                    sun.misc.PerfCounter.getParentDelegationTime().addTime(t1 - t0);
+                    sun.misc.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);
+                    sun.misc.PerfCounter.getFindClasses().increment();
+                }
+            }
+            if (resolve) {
+                resolveClass(c);	//进入解析过程
+            }
+            return c;
+        }
+    }
+```
