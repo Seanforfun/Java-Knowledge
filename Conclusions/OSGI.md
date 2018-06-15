@@ -89,5 +89,79 @@ Inside HelloServiceImple.sayHello()
 Say Hello
 ```
 
+#### SOA传递工厂方法
+1. 创建工厂方法的实现类
+* getService方法：特定的bundle在第一次调用BundleContext的getService方法时由OSGI框架调用，在实例代码中，我们用这个方法来返回一个新的HelloService的实现。OSGI框架会缓存这个返回的对象，如果同一个bundle在未来再次调用BundleContext的getService方法的话，会直接返回这个缓存中的对象。
+* ungetService方法：bundle释放service的时候由OSGI容器调用。
+
+```Java
+public class HelloServiceFactory<S> implements ServiceFactory<S> {
+	private static int usageCounter = 0;
+	@SuppressWarnings("unchecked")
+	@Override
+	public S getService(Bundle bundle, ServiceRegistration<S> registration) {
+		System.out.println("Create object of HelloService for " + bundle.getSymbolicName());
+		usageCounter++;
+		System.out.println("Number of bundles using service " + usageCounter);
+		return (S) new HelloImpl();
+	}
+	@Override
+	public void ungetService(Bundle bundle, ServiceRegistration<S> registration, S service) {
+		System.out.println("Release object of HelloService for " + bundle.getSymbolicName());
+        usageCounter--;
+        System.out.println("Number of bundles using service " + usageCounter);
+	}
+}
+```
+
+2. 注册工厂类
+```Java
+public class Activator implements BundleActivator {
+	private ServiceRegistration<?> helloServiceRegistration;
+	public void start(BundleContext context) throws Exception {
+		HelloServiceFactory<HelloService> helloServiceFactory = new HelloServiceFactory<>();
+		helloServiceRegistration = context.registerService(HelloService.class.getName(), helloServiceFactory, null);
+	}
+	public void stop(BundleContext context) throws Exception {
+		helloServiceRegistration.unregister();
+	}
+}
+```
+
+3. 在使用的服务中注册一个服务跟踪器
+```Java
+public class HelloServiceTracker<S, T> extends ServiceTracker<S, T> {
+	public HelloServiceTracker(BundleContext context) {
+        super(context, HelloService.class.getName(),null);
+    }
+	public Object addingService(ServiceReference reference) {
+        System.out.println("Inside HelloServiceTracker.addingService " + reference.getBundle());
+        return super.addingService(reference);
+    }
+    public void removedService(ServiceReference reference, Object service) {
+        System.out.println("Inside HelloServiceTracker.removedService " + reference.getBundle());
+        super.removedService(reference, (T) service);
+    }
+}
+```
+
+4. 在Activator中打开追踪器并获取服务
+```Java
+public class Activator implements BundleActivator {
+	private HelloServiceTracker serviceTracker;
+	public void start(BundleContext context) throws Exception {
+		System.out.println("Service Factory Register.");
+		serviceTracker = new HelloServiceTracker<>(context);
+		serviceTracker.open();	//打开追踪器
+		HelloService service = (HelloService)serviceTracker.getService();	//通过追踪器获取服务实例。
+		System.out.println(service.sayHello());
+	}
+	public void stop(BundleContext context) throws Exception {
+		System.out.println("Goodbye World!!");
+		serviceTracker.close();
+	}
+}
+```
+
 ### Reference
 [OSGI入门实例讲解（一）](https://blog.csdn.net/cruise_h/article/details/27369749)
