@@ -32,3 +32,6 @@ Save my conclusions different aspect of Java.
 * [JVM Memory Manage](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JVMMemoryManage.md)
 * [JVM Class Loader](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JVMClassLoader.md)
 
+## Java Technologies
+* [OSGi](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/OSGI.md)
+

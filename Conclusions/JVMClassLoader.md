@@ -120,6 +120,7 @@
 
 1. `public static int value = 123`
 此时在方法区中为类开辟内存，并实行memset到0的操作。此时虽然value被赋值123，但是当前步骤不会根据代码对静态变量进行赋值。
+
 ![基本数据类型的初始化值](https://i.imgur.com/xhJBnpt.jpg)
 
 * 解析（Resolving）
@@ -218,3 +219,13 @@ protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundE
         }
     }
 ```
+
+#### 如何使用ClassLoader类
+1. 继承ClassLoader，并且重写loadClass类，这样就能提供寻找类加载器的机制。这破坏了Parents delegant method。（不推荐）
+2. 继承ClassLoader，并重写findClass类。这样仍然利用了双亲委派机制，只是在所有的上层类加载器均无法使用时才会根据findClass()找到程序员自定义的类加载器。
+
+#### OSGi(Open Services Gateway Initiative)实现模块化热部署
+1. OSGI容器需要实现的服务集合。
+2. OSGI容器和应用之间的通信机制。
+3. OSGI容器被设计专门用来开发可分解为功能模块的复杂的Java应用。
+4. 打个比方，在MVC的框架中，我们想要修改Dao的代码，我们可以热更新Dao而不需要重启服务器。
