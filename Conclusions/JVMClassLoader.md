@@ -291,3 +291,39 @@ public class OverloadTest {
 Hello guy!
 Hello guy!
 ```
+
+* 静态分派
+	> 所有依赖静态类型来定位方法执行版本的分派作用，都成为静态分派。最典型的应用就是方法重载。
+1. 虚拟机（准确的说是编译器）是通过参数的静态类型而不是实际类型作为判断依据的。
+
+* 动态分派
+```Java
+public class OverrideTest {
+	static abstract class Human{
+		public abstract void sayHello();
+	}
+	static class Man extends Human{
+		@Override
+		public void sayHello() {
+			System.out.println("Man says Hello.");
+		}
+	}
+	static class Woman extends Human{
+		@Override
+		public void sayHello() {
+			System.out.println("Woman says hello!");
+		}
+	}
+	public static void main(String[] args) {
+		Human man = new Man();
+		Human woman = new Woman();
+		man.sayHello();
+		woman.sayHello();
+		man = new Woman();
+		man.sayHello();
+	}
+}
+```
+1. 在当前类中找到与常量中的描述符和简单名称都相符的方法，权限校验，如果通过则返回这个方法的直接引用。
+2. 否则按照继承关系从下往上对这个类的父类进行步骤1,。
+3. 如果始终没有找到合适的方法，抛出java.lang.AbstractMethodError。
