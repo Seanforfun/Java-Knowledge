@@ -253,3 +253,41 @@ protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundE
 	1. 恢复上层方法的局部变量表和操作数栈。
 	2. 把返回值（如果存在）压入上层的操作数栈中。
 	3. 调整PC计数器指向下一条调用的指令。
+
+### 方法调用（Method Invocation）
+> 方法调用不等于方法执行，方法调用阶段唯一的任务就是确定被调用方法的版本（哪一个方法），暂时不涉及方法内部的具体过程。一切方法调用在Class文件里面存储的都是符号引用，而不是方法在实际运行时内存布局中的入口地址。
+
+* 解析
+1. 在类解析的过程中，会将一部分符号引用转化成直接引用，这成立的前提是：方法在运行之前就有一个可确定的调用版本，并且这个方法的调用版本在运行期是不可改变的。
+2. 符合“编译期可知，运行期不可变”这个要求的方法主要有静态方法和私有方法两大类。这两种方法都不能通过继承重写出其他版本，符合要求。
+	* 分派
+	> JVM实现重载和重写的机制
+
+```Java
+public class OverloadTest {
+	static abstract class Human{
+	}
+	static class Man extends Human{
+	}
+	static class Woman extends Human{
+	}
+	public void sayHello(Human guy){
+		System.out.println("Hello guy!");
+	}
+	public void sayHello(Man guy){
+		System.out.println("Hello gentleman!");
+	}
+	public void sayHello(Woman guy){
+		System.out.println("Hello lady!");
+	}
+	public static void main(String[] args) {
+		Human man = new Man();	//此时Human是静态类型（Apparent Type），后面的Man是实际类型（Actual Type）。
+		Human woman = new Woman();
+		OverloadTest test = new OverloadTest();
+		test.sayHello(man);	//在方法重载时，会根据静态类型决定使用哪个重载版本。所以此时静态类型是Human，所以会调用参数为Human的方法。
+		test.sayHello(woman);
+	}
+}
+Hello guy!
+Hello guy!
+```
