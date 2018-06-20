@@ -2,7 +2,8 @@
 Save my conclusions different aspect of Java.
 
 ## Java Core
-* [Annotation](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Annotation.txt)
+* [Annotation version:2.0](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Annotation.md)
+* [Annotation version:1.0](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Annotation.txt)
 * [Comparable and Comparator](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/ComparableAndComparator.md)
 * [Exception and Error](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Exception%20and%20Error.txt)
 * [Generic](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Generic.txt)
