@@ -1,5 +1,6 @@
 package ca.mcmaster.multithread.lock;
 
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ReentrantLockTest implements Runnable {

@@ -11,7 +11,7 @@ import java.io.PrintStream;
  */
 public class HackSystem {
 	public static final InputStream in = System.in; 
-	private static ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+	private static final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 	public final static PrintStream out = new PrintStream(buffer);
 	public final static PrintStream err = out;
 	/**
