@@ -74,3 +74,35 @@ Sun javac的编译过程可以个分成三步：
 4. 字节码生成
 	* 将前面步骤生成的信息转化成字节码写到磁盘中，并进行少量的代码添加和转化工作。
 	* 例如添加默认的构造方法。字符串的加操作转化成StringBuilder或是StringBuffer方法。
+
+### 晚期（运行期）优化
+> Java的编译是通过解释器和编译器共同完成的。
+1. 当程序一开始运行时，解释器首先发挥作用，省去编译时间，立即就可以开始运行。
+2. 随着时间的推移，编译器将越来越多的代码编译成编译成本地代码，获取更高的执行效率。
+3. 解释器和编译器的协同作用体现在解释器要替编译器收集性能监控信息，从而编译器可以变溢出更好的本地代码。
+
+![Interpreter](https://i.imgur.com/KDztLic.png)
+
+#### 分层编译（Tiered Compilation）
+1. 解释器开始运行,解释器不开启监控功能(Profiling),可触发第一层编译。
+2. 编译器开始编译（C1编译），加入简单可靠的优化，如有必要会加入性能监控的逻辑。
+3. C2编译，将字节码编译成本地代码，会利用监控功能的信息做一些激进但不可靠的优化。
+
+#### 热点代码
+1. 多次调用的代码。
+2. 多次循环的循环体。
+
+* 如何判断一段代码是热点代码
+	* Sample Based Hot spot detection
+		* JVM会定期的采样栈顶的方法，如果总是出现则被判定为热点代码。
+	* Counter based hot spot detection
+		* JVM会为每个方法（甚至是代码块）分配计数器。
+		![Counter based hot spot detection](https://i.imgur.com/NEgqfn8.png)
+
+* 代码优化
+	* Dead Code Elimination
+	* Loop Unrolling
+	* Loop Expression Hoisting
+	* Common Subexpression Elimination
+	* Constant Propagation
+	* Basic Block Reordering
