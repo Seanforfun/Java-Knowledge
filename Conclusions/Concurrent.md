@@ -25,3 +25,38 @@
 * assign：作用于工作内存的变量。当JVM需要对某个变量进行赋值时，将调用该指令对工作内存中的变量进行赋值。
 * store： 将工作内存的一个变量的值传到主内存，为了write做准备。
 * write：作用于主内存的变量，将store得到的变量的值写入。
+
+#### volatile
+1. volatile不是线程安全的，能保证的是在进行读取的时候这个值是主内存中的最新值。但是同时别的线程可能也已经获取了值，在写回主内存中时候可能造成线程不安全。
+```Java
+public class VolatileTest{
+	public static volatile int count = 0;
+	public static void increase(){
+		count ++;
+	}
+	public static void main(String[] args) throws InterruptedException {
+		Thread[] threads = new Thread[20];
+		for(int i = 0; i < 20; i++){
+			threads[i] = new Thread(() -> {
+				for(int j = 0; j < 10000; j++)
+					increase();	//每个线程都自增一个volatile变量。
+			}, "thread-" + i);
+			threads[i].start();
+		}
+		for(Thread t : threads)
+			t.join();
+		System.out.println(count);	//最后得到结果一般都小于200000
+	}
+}
+```
+2. 写入时要保证修改变量后要立刻写入主内存中，保证其他变量都能看到线程对V的改变。
+3. 保证volatile修饰的变量不会被指令重排序优化。
+
+#### 原子性与可见性与有序性
+1. 原子性
+	* 虚拟机没有把lock和unlock开放给用户使用，却提供了monitorenter和monitorexit来隐式的使用lock和unlock。反映到Java的上层代码中就是syncronized,所以在synchronized之间的代码是有原子性的。
+2. 可见性
+	* 通过volatile变量可以实现。与普通变量相比，volatile变量可以保证当前变量是主内存中的最新值。
+	* syncronized和final也可以保证可见性。
+3. 有序性
+	* 如果在线程内部观察，所有的线程都是有序的，如果在一个线程观察另一个线程，所有的操作都是无序的。
