@@ -60,3 +60,13 @@ public class VolatileTest{
 	* syncronized和final也可以保证可见性。
 3. 有序性
 	* 如果在线程内部观察，所有的线程都是有序的，如果在一个线程观察另一个线程，所有的操作都是无序的。
+
+#### 先行发生原则（happens-before）
+1. 程序次序原则(Program Order Rule):在一个线程内部，按照代码的顺序，书写在前面的操作先行发生于书写在后面的操作。
+2. 管程锁定规则(Monitor Lock Rule):同一把锁，上一次unlock之前的代码在此次的lock之前。
+3. volatile变量规则(Volatile Variable Rule):对于一个volatile变量，写操作优先于对这个变量的读操作。
+4. 线程启动规则(Thread Start Rule):Thread对象的start方法优先于此线程的每一个操作。
+5. 线程终止规则(Thread Termination Rule):线程所有的指令优先于线程的终止。
+6. 线程中断规则(Thread Interrupt Rule):对线程interrupt方法的调用先行发生于被中断线程的代码检测到中段发生的事件。
+7. 对象终结规则(Finalizer Rule):对象的初始化优先于对象对于Finalize方法的调用。
+8. 传递性(Transitivity):A优先于B，B优先于C，所以A优先于C。
