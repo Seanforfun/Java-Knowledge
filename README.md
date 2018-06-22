@@ -44,7 +44,7 @@ Save my conclusions different aspect of Java.
 
 ## OOP Design
 * Creation Pattern
-	* [Singleton]()
+	* [Singleton](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Singleton.md)
 	* [Prototype]()
 	* [Factory Method](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/FactoryMethod.md)
 	* [Abstract Factory](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/AbstractFactory.md)

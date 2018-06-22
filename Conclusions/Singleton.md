@@ -47,6 +47,25 @@ public class Singleton implements Serializable{
 		return instance;
 	}
 ```
+* 实际上这也会造成线程安全问题。第一个线程还没有创建完对象的时候，另一个线程已经获取了instance的值并进行使用了。
+
+### 线程安全版本3
+```Java
+public class Singleton1 {
+	private Singleton1(){
+	}
+	//创建静态内部类,在类加载阶段就已经完成，不会造成线程安全问题。
+	private static class SingletonFactory{
+		private final static Singleton1 instance = new Singleton1();
+	}
+	public Singleton1 getInstance(){
+		return SingletonFactory.instance;
+	}
+	 public Object readResolve() {
+		 return getInstance();
+	 }
+}
+```
 
 ### Reference
 1. [23种设计模式全解析](https://www.cnblogs.com/susanws/p/5510229.html)
