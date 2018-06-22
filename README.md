@@ -48,7 +48,7 @@ Save my conclusions different aspect of Java.
 	* [Prototype]()
 	* [Factory Method](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/FactoryMethod.md)
 	* [Abstract Factory](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/AbstractFactory.md)
-	* [Builder]()
+	* [Builder](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Builder.md)
 * Structural Pattern
 	* [Adapter]()
 	* [Bridge]()
