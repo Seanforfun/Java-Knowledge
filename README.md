@@ -45,12 +45,12 @@ Save my conclusions different aspect of Java.
 ## OOP Design
 * Creation Pattern
 	* [Singleton](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Singleton.md)
-	* [Prototype]()
+	* [Prototype](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Prototype.md)
 	* [Factory Method](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/FactoryMethod.md)
 	* [Abstract Factory](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/AbstractFactory.md)
 	* [Builder](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Builder.md)
 * Structural Pattern
-	* [Adapter]()
+	* [Adapter](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Adapter.md)
 	* [Bridge]()
 	* [Composite]()
 	* [Decorator]()

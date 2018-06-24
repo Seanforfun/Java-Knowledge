@@ -21,12 +21,13 @@ public interface Sender {
 	* 定义一个MailSender实现类
 	```Java
 	public class MailSender implements Sender {
-	@Override
-	public void send() {
-		System.out.println("This is a Mail Sender!");
+		@Override
+		public void send() {
+			System.out.println("This is a Mail Sender!");
+		}
 	}
-}
 	```
+	
 	* 定义一个SMSSender实现类
 	```Java
 	public class SMSSender implements Sender {
