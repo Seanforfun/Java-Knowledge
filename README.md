@@ -53,7 +53,7 @@ Save my conclusions different aspect of Java.
 	* [Adapter](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Adapter.md)
 	* [Bridge]()
 	* [Composite]()
-	* [Decorator]()
+	* [Decorator](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Decorator.md)
 	* [Facade]()
 	* [Fly Weight]()
 	* [Proxy]()
@@ -69,4 +69,3 @@ Save my conclusions different aspect of Java.
 	* [State]()
 	* [Strategy]()
 	* [Visitor]()
-
