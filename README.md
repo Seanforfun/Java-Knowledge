@@ -56,7 +56,7 @@ Save my conclusions different aspect of Java.
 	* [Decorator](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Decorator.md)
 	* [Facade]()
 	* [Fly Weight]()
-	* [Proxy]()
+	* [Proxy](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Proxy.md)
 * Behavioral Pattern
 	* [Interpreter]()
 	* [Template Method]()
