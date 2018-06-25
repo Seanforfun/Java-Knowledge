@@ -51,8 +51,8 @@ Save my conclusions different aspect of Java.
 	* [Builder](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Builder.md)
 * Structural Pattern
 	* [Adapter](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Adapter.md)
-	* [Bridge]()
-	* [Composite]()
+	* [Bridge](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Bridge.md)
+	* [Composite](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Composite.md)
 	* [Decorator](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Decorator.md)
 	* [Facade](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Facade.md)
 	* [Fly Weight]()
