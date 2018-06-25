@@ -100,7 +100,7 @@ public class CglibProxyFactory<T> implements MethodInterceptor{
 	}
 	@Override
 	public Object intercept(Object arg0, Method method, Object[] arg2,
-			MethodProxy arg3) throws Throwable {
+			MethodProxy arg3) throws Throwable {	//增强的方法
 		System.out.println("Advice before...");
 		Object ret = method.invoke(target, arg2);
 		System.out.println("Advice after...");
