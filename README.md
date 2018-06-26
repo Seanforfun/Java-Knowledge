@@ -55,7 +55,7 @@ Save my conclusions different aspect of Java.
 	* [Composite](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Composite.md)
 	* [Decorator](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Decorator.md)
 	* [Facade](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Facade.md)
-	* [Fly Weight]()
+	* [Fly Weight](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Flyweight.md)
 	* [Proxy](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Proxy.md)
 * Behavioral Pattern
 	* [Interpreter]()
@@ -67,5 +67,5 @@ Save my conclusions different aspect of Java.
 	* [Memento]()
 	* [Observer]()
 	* [State]()
-	* [Strategy]()
+	* [Strategy](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Strategy.md)
 	* [Visitor]()
