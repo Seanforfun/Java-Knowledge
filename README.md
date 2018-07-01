@@ -65,7 +65,7 @@ Save my conclusions different aspect of Java.
 	* [Iterator]()
 	* [Mediator]()
 	* [Memento]()
-	* [Observer]()
+	* [Observer](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Observer.md)
 	* [State]()
 	* [Strategy](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Strategy.md)
 	* [Visitor]()
