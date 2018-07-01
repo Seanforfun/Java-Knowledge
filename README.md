@@ -59,7 +59,7 @@ Save my conclusions different aspect of Java.
 	* [Proxy](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Proxy.md)
 * Behavioral Pattern
 	* [Interpreter]()
-	* [Template Method]()
+	* [Template Method](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/TemplateMethod.md)
 	* [Chain of responsibility]()
 	* [Command]()
 	* [Iterator]()
