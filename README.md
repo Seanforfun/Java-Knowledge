@@ -60,7 +60,7 @@ Save my conclusions different aspect of Java.
 * Behavioral Pattern
 	* [Interpreter]()
 	* [Template Method](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/TemplateMethod.md)
-	* [Chain of responsibility]()
+	* [Chain of responsibility](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/ResponsibilityChain.md)
 	* [Command]()
 	* [Iterator](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Iterator.md)
 	* [Mediator]()
