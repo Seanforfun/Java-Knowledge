@@ -64,7 +64,7 @@ Save my conclusions different aspect of Java.
 	* [Command](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Command.md)
 	* [Iterator](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Iterator.md)
 	* [Mediator]()
-	* [Memento]()
+	* [Memento](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Momemto.md)
 	* [Observer](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Observer.md)
 	* [State]()
 	* [Strategy](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Strategy.md)
