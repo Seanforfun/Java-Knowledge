@@ -61,7 +61,7 @@ Save my conclusions different aspect of Java.
 	* [Interpreter]()
 	* [Template Method](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/TemplateMethod.md)
 	* [Chain of responsibility](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/ResponsibilityChain.md)
-	* [Command]()
+	* [Command](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Command.md)
 	* [Iterator](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Iterator.md)
 	* [Mediator]()
 	* [Memento]()
