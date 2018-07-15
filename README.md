@@ -58,7 +58,7 @@ Save my conclusions different aspect of Java.
 	* [Fly Weight](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Flyweight.md)
 	* [Proxy](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Proxy.md)
 * Behavioral Pattern
-	* [Interpreter]()
+	* [Interpreter](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Interpreter.md)
 	* [Template Method](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/TemplateMethod.md)
 	* [Chain of responsibility](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/ResponsibilityChain.md)
 	* [Command](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Command.md)
@@ -68,4 +68,4 @@ Save my conclusions different aspect of Java.
 	* [Observer](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Observer.md)
 	* [State](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/State.md)
 	* [Strategy](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Strategy.md)
-	* [Visitor]()
+	* [Visitor](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Visitor.md)
