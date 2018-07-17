@@ -122,7 +122,7 @@ public interface BeanFactory {
 }
 ```
 
-### 编程式的使用IoC容器
+#### 编程式的使用IoC容器
 ```Java
 public class DefaultListableBeanFactoryTest {
 	public static void main(String[] args) {
@@ -135,6 +135,72 @@ public class DefaultListableBeanFactoryTest {
 	}
 }
 ```
+
+#### ApplicationContext
+> ApplicationContext是BeanFactory的实现，并添加了诸多新功能。
+
+1. ApplicationEventPublisher:使容器拥有发布上下文的功能，包括启动事件和关闭事件。
+	* ApplicationEventMulticaster的multicastEvent方法可以将事件注册到对应的Listener上。
+	```Java
+	public void multicastEvent(final ApplicationEvent event) {
+		for (final ApplicationListener<?> listener : getApplicationListeners(event)) {
+			Executor executor = getTaskExecutor();
+			if (executor != null) {
+				executor.execute(new Runnable() {
+					@Override
+					public void run() {
+						invokeListener(listener, event);
+					}
+				});
+			}
+			else {
+				invokeListener(listener, event);
+			}
+		}
+	}
+```
+
+2. MessageSource: 用于i18n。
+[Spring之国际化实现](https://www.jianshu.com/p/07a3b8e3658a)
+	* 需要自己定义MessageSource和Bundle用于填充国际化。
+
+3. ResourcePatternResolver: 用于Resource的匹配.
+```Java
+public interface ResourcePatternResolver extends ResourceLoader {
+	String CLASSPATH_ALL_URL_PREFIX = "classpath*:";	//前缀的正则匹配
+	Resource[] getResources(String locationPattern) throws IOException;	//获取多个资源。
+}
+```
+4. ConfigurableApplicationContext：对于ApplicationContext的增强。
+5. ApplicationContext会在初始化时将所有的单例全部生成完成，所以会比BeanFactory花更多的时间，但是在后期则会直接调用这个单例，不会再有延时。
+
+#### 使用WebApplicationContext
+> 在WebApplicationContext中我们要整合ServletContext和SpringContext。
+
+```Java
+/**
+	 * Return the standard Servlet API ServletContext for this application.
+	 * <p>Also available for a Portlet application, in addition to the PortletContext.
+	 */
+	ServletContext getServletContext();
+```
+
+> 我们必须要等到ServletContext的环境初始化完成后，所以我们需要在web.xml中通过监听器确定ServletContext的环境已经初始化完成。
+
+```xml
+<listener>
+	<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:applicationContext.xml</param-value>
+</context-param>
+```
+
+#### Spring Bean的生命周期
+![Spring Bean的生命周期Part1](https://i.imgur.com/4UeZnAx.png)
+![Spring Bean的生命周期Part2](https://i.imgur.com/dYhQO2v.png)
+
 
 ### IoC容器的初始化
 1. BeanDefinition的Resource定位。

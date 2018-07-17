@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="
-http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context  
+       http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
+	<!-- <context:annotation-config/>
+	<context:component-scan base-package="ca.mcmaster.spring.beanfactory.annotation"/> -->
  	<bean id="customer" class="ca.mcmaster.spring.Customer" scope="singleton">
 		<property name="name" value="Sean"/>
-		<!-- <property name="car" ref="car"/> -->
 	</bean>
+	
+	<bean id="myBean" class="ca.mcmaster.spring.beanfactory.lifecycle.MyBean" scope="singleton">
+      <property name="tag" value="test"/>
+  </bean>  
 	
 	<!-- <bean id="car" class="ca.mcmaster.vo.Car">
 		<property name="customer" ref="customer"></property>
