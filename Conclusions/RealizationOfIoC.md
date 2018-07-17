@@ -48,7 +48,60 @@ public class ReflectTest {
 }
 ```
 
-### BeanFactory
+### ClassLoader
+```Java
+public class ClassloaderTest {
+	public static void main(String[] args) {
+		ClassLoader applicationClassLoader = Thread.currentThread().getContextClassLoader();
+		System.out.println("Current classloader: " + applicationClassLoader);
+		System.out.println("Parent classloader: " + applicationClassLoader.getParent());
+		System.out.println("Boot classloader: " + applicationClassLoader.getParent().getParent());
+	}
+}
+Current classloader: sun.misc.Launcher$AppClassLoader@73d16e93
+Parent classloader: sun.misc.Launcher$ExtClassLoader@15db9742
+Boot classloader: null //启动加载器是通过C++实现的，用于加载${JAVA_HOME}/lib中的类。
+```
+
+### Resource对象
+> Resource对象是对资源文件的一种抽象，提供了多种对于文件信息获取的方法，可以用于Spring定位包含BeanDefinition的文件并获取资源。
+
+* 两种通过输入流操作获取Resource内容的方法。
+```Java
+public class ResourceTest {
+	public static void main(String[] args) throws IOException {
+		InputStream is = null;
+		try{
+			Resource resource = new FileSystemResource("F://JavaEE_Project/JavaCore/src/beans.xml");
+			System.out.println(resource.getFilename());
+			System.out.println(resource.getDescription());
+			is = resource.getInputStream();
+			byte[] b = new byte[1024];
+			int index = 0;
+			StringBuilder sb = new StringBuilder();
+			while((index = is.read(b)) != -1){	//通过输入流的read方法一致读到EOF
+				String s = new String(b);
+				sb.append(s);
+				index = 0;
+			}
+			System.out.println(sb.toString());
+			System.out.println("=====================");
+			EncodedResource encRes = new EncodedResource(resource, "UTF-8");
+			String content = FileCopyUtils.copyToString(encRes.getReader());	//通过Spring封装好的FileCopyUtils工具类，实现从Reader中获取字符并转换成字符串。
+			System.out.println(content);
+		}finally{
+			is.close();
+		}
+	}
+}
+```
+
+### BeanFactory and Application Context
+* BeanFactory是Spring的框架设施，就是我们平时所说的IOC容器，是一种较为底层的容器，一般程序员并不会用到，却是Spring实现的核心。
+* ApplicationContext叫做应用上下文，面向Spring框架的开发者，有时我们也成为Spring容器。
+
+#### BeanFactory
+> BeanFactory是类的通用工厂，可以创建并管理各种POJO类，这些类要遵从一定的规范，这样Beanfaactory才能调用反射机制生成类对象。
 *  The root interface for accessing a Spring bean container.
 ```Java
 public interface BeanFactory {
