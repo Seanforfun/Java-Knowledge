@@ -201,6 +201,226 @@ public interface ResourcePatternResolver extends ResourceLoader {
 ![Spring Bean的生命周期Part1](https://i.imgur.com/4UeZnAx.png)
 ![Spring Bean的生命周期Part2](https://i.imgur.com/dYhQO2v.png)
 
+* 通过实现InstantiationAwareBeanPostProcessor定义所有的方法。
+```Java
+public class MyInstantiationAwareBeanPostProcessor implements
+		InstantiationAwareBeanPostProcessor {
+	@Override
+	public Object postProcessBeforeInitialization(Object bean, String beanName)
+			throws BeansException {
+		System.out.println("[BeanPostProcessor]:Run postProcessBeforeInitialization");
+		return bean;
+	}
+	@Override
+	public Object postProcessAfterInitialization(Object bean, String beanName)
+			throws BeansException {
+		System.out.println("[BeanPostProcessor]:Run postProcessAfterInitialization");
+		return bean;
+	}
+	@Override
+	public Object postProcessBeforeInstantiation(Class<?> beanClass,
+			String beanName) throws BeansException {
+		System.out.println("[InstantiationAwareBeanPostProcessor]:Run postProcessBeforeInstantiation");
+		return null;
+	}
+	@Override
+	public boolean postProcessAfterInstantiation(Object bean, String beanName)
+			throws BeansException {
+		System.out.println("[InstantiationAwareBeanPostProcessor]:Run postProcessAfterInstantiation");
+		return true;
+	}
+	@Override
+	public PropertyValues postProcessPropertyValues(PropertyValues pvs,
+			PropertyDescriptor[] pds, Object bean, String beanName)
+			throws BeansException {
+		System.out.println("[InstantiationAwareBeanPostProcessor]:Run postProcessPropertyValues");
+		return pvs;
+	}
+}
+```
+
+* 定义要注册的Bean,在其中实现了bean生命周期中的多种方法。
+```Java
+public class MyBean implements BeanNameAware, BeanFactoryAware, InitializingBean, DisposableBean{
+    private BeanFactory beanFactory;
+    private String name;
+    private String tag;
+    public MyBean(){
+        System.out.println("调用构造器实例化Bean");
+    }
+    public void printName(){
+        System.out.println("MyBean name is: " + name);
+    }
+    public String getTag() {
+        return tag;
+    }
+    public void setTag(String tag) {
+        this.tag = tag;
+        System.out.println("设置Bean的属性为：" + tag);
+    }
+    @Override
+    public void destroy() throws Exception {
+        System.out.println("调用DisposableBean接口的destroy方法");
+    }
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        System.out.println("调用InitializingBean接口的afterPropertiesSet方法");
+    }
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.beanFactory = beanFactory;
+        System.out.println("调用BeanFactoryAware接口的setBeanFactory方法");
+    }
+    @Override
+    public void setBeanName(String name) {
+        this.name = name;
+        System.out.println("调用BeanNameAware接口的setBeanName方法");
+    }
+}
+```
+
+* 测试类
+```Java
+public class LifeCycleTest {
+	public static void main(String[] args) {
+		Resource resource = new ClassPathResource("beans.xml");
+		DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+		beanFactory.addBeanPostProcessor(new MyInstantiationAwareBeanPostProcessor());
+		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(beanFactory);
+		reader.loadBeanDefinitions(resource);
+		MyBean bean = (MyBean) beanFactory.getBean("myBean");
+		bean.printName();
+		beanFactory.destroySingletons();
+	}
+}
+```
+
+#### 生命周期分析
+1. 在调用getBean时，会调用InstantiationAwareBeanPostProcessor的postProcessBeforeInstantiation方法。该方法是optional的，需要注册该方法。
+	* [InstantiationAwareBeanPostProcessor]:Run postProcessBeforeInstantiation
+2. 调用构造器实例化Bean。该构造器方法必须是无参的。
+3. 在初始化后，会调用InstantiationAwareBeanPostProcessor的postProcessAfterInstantiation方法，此时对象的实例已经被创建，但是fields都没有被填充。
+	* [InstantiationAwareBeanPostProcessor]:Run postProcessAfterInstantiation
+4. 在填充属性之前，会调用InstantiationAwareBeanPostProcessor的postProcessPropertyValues。
+	* [InstantiationAwareBeanPostProcessor]:Run postProcessPropertyValues
+	* 设置Bean的属性为：test
+5. 调用BeanNameAware接口的setBeanName方法
+	* 此时会将id赋值给类。
+6. 调用BeanFactoryAware接口的setBeanFactory方法
+	* 将BeanFactory注入给bean对象，此时将IOC容器传入bean。
+7. 容器再次获得对Bean进行加工的机会。
+	* [BeanPostProcessor]:Run postProcessBeforeInitialization
+8. 调用InitializingBean接口的afterPropertiesSet方法，可以再次释放资源，记录日志。
+9. 运行BeanPostProcessor的postProcessAfterInitialization方法
+	* [BeanPostProcessor]:Run postProcessAfterInitialization
+10. 此处开始，bean完成了所有的初始化工作，开始进行对bean的使用。
+	* MyBean name is: myBean
+11. 调用DisposableBean接口的destroy方法
+
+#### Spring Bean生命周期的讨论
+* 实际上上述的绝大多数过程都是可选的，而我们必须通过实现Spring的一些框架。
+* 我们希望去除bean和Spring的耦合，所以最好只是让Spring维护POJO。
+
+### IOC容器装配Bean
+![Spring 容器高层视图](https://i.imgur.com/SCo3jD2.png)
+
+```XML
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+	<!-- 默认命名空间 -->
+ 	<bean id="customer" class="ca.mcmaster.spring.Customer" scope="singleton">
+		<property name="name" value="Sean"/>
+	</bean>
+	<bean id="myBean" class="ca.mcmaster.spring.beanfactory.lifecycle.MyBean" scope="singleton">
+      <property name="tag" value="test"/>
+  </bean>
+</beans>
+```
+
+#### Dependency Injection依赖注入
+1. 属性注入，通过get和set方法将依赖注入到对象中。此处的get/set方法要符合命名规范。
+```Java
+public class Student {
+	private String name;
+	private int age;
+	private Customer customer;
+	public Customer getCustomer() {
+		return customer;
+	}
+	public void setCustomer(Customer customer) {
+		this.customer = customer;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public int getAge() {
+		return age;
+	}
+	public void setAge(int age) {
+		this.age = age;
+	}
+	public static void main(String[] args) {
+		ApplicationContext ctx = new ClassPathXmlApplicationContext("beans.xml") ;
+		Student student = (Student) ctx.getBean("student");
+		System.out.println(student.getCustomer().getName());
+	}
+}
+```
+```xml
+<bean id="student" class="ca.mcmaster.spring.di.Student" scope="singleton">
+		<!-- 基本数据类型通过value选项注入 -->
+  		<property name="name" value="Sean"/>
+  		<property name="age" value="25"/>
+		<!-- 引用类型通过ref选项注入 -->
+  		<property name="customer" ref="customer"/>
+  	</bean>
+```
+
+2. 构造器注入
+```Java
+public class Car {
+	private String brand;
+	private String color;
+	public Car(String brand, String color){	//通过构造器注入
+		this.brand = brand;
+		this.color = color;
+	}
+	public String getBrand() {
+		return brand;
+	}
+	public String getColor() {
+		return color;
+	}
+	public void setBrand(String brand) {
+		this.brand = brand;
+	}
+	public void setColor(String color) {
+		this.color = color;
+	}
+	public static void main(String[] args) {
+		ApplicationContext ctx = new ClassPathXmlApplicationContext("beans.xml") ;
+		Car car = (Car) ctx.getBean("car");
+		System.out.println(car.getBrand());
+	}
+}
+```
+```xml
+<bean id="car" class="ca.mcmaster.spring.di.Car" scope="singleton">
+  	<constructor-arg name="brand" value="RAV4" type="java.lang.String"/>
+  	<constructor-arg name="color" value="GREY" type="java.lang.String"/>
+</bean>
+```
+* 在JDK1.8中无法读取Spring3.x的构造器注入法，此处通过JDK1.7可以通过。
 
 ### IoC容器的初始化
 1. BeanDefinition的Resource定位。

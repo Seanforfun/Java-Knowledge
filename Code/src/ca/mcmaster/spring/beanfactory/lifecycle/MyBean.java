@@ -43,6 +43,6 @@ public class MyBean implements BeanNameAware, BeanFactoryAware, InitializingBean
     @Override
     public void setBeanName(String name) {
         this.name = name;
-        System.out.println("调用BeanNameAware接口的setBeanName方法");
+        System.out.println("调用BeanNameAware接口的setBeanName方法" + this.name);
     }
 }

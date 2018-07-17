@@ -8,27 +8,21 @@
         http://www.springframework.org/schema/context  
        http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
-	<!-- <context:annotation-config/>
-	<context:component-scan base-package="ca.mcmaster.spring.beanfactory.annotation"/> -->
  	<bean id="customer" class="ca.mcmaster.spring.Customer" scope="singleton">
-		<property name="name" value="Sean"/>
+		<property name="name" value="BigSean"/>
 	</bean>
 	
-	<bean id="myBean" class="ca.mcmaster.spring.beanfactory.lifecycle.MyBean" scope="singleton">
+	<!-- <bean id="myBean" class="ca.mcmaster.spring.beanfactory.lifecycle.MyBean" scope="singleton">
       <property name="tag" value="test"/>
-  </bean>  
-	
-	<!-- <bean id="car" class="ca.mcmaster.vo.Car">
-		<property name="customer" ref="customer"></property>
-	</bean>
-	
-	<bean id="student" class="ca.mcmaster.vo.Student" factory-method="newStudentInstance">
-		<property name="name" value="Sean" />
-	</bean>
-	
-	<bean id="beanDemo" class="ca.mcmaster.vo.BeanDemoImpl" init-method="setup" destroy-method="mydestroy">
-		<property name="name" value="BeanCycleDemo"/>
-	</bean>
-	
-	<bean class="ca.mcmaster.vo.MyBeanPostProcessor"/> -->
+  </bean>  -->
+  	<bean id="student" class="ca.mcmaster.spring.di.Student" scope="singleton">
+  		<property name="name" value="Sean"/>
+  		<property name="age" value="25"/>
+  		<property name="customer" ref="customer"/>
+  	</bean>
+  	
+	<bean id="car" class="ca.mcmaster.spring.di.Car" scope="singleton">
+  		<constructor-arg name="brand" value="RAV4" type="java.lang.String"/>
+  		<constructor-arg name="color" value="GREY" type="java.lang.String"/>
+  	</bean>
 </beans>
