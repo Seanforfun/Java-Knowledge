@@ -422,6 +422,28 @@ public class Car {
 ```
 * 在JDK1.8中无法读取Spring3.x的构造器注入法，此处通过JDK1.7可以通过。
 
+3. 工厂方法注入
+* 定义工厂类
+```Java
+public class CarFactory {
+	public Car getInstance(){
+		Car car = new Car("bmw", "white");
+		return car;
+	}
+	public static void main(String[] args) {
+		ApplicationContext ctx = new ClassPathXmlApplicationContext("beans.xml");
+		Car car = (Car) ctx.getBean("bmw");
+		System.out.println(car.getBrand());
+	}
+}
+```
+```xml
+<!-- 如果是非静态工厂，则需要定义一个工厂类的实例 -->
+<bean id="carFactory" class="ca.mcmaster.spring.di.CarFactory" scope="singleton"/>
+<!-- 通过工厂类的方法返回实例 -->
+ <bean id="bmw" factory-bean="carFactory" factory-method="getInstance"></bean>
+```
+
 ### IoC容器的初始化
 1. BeanDefinition的Resource定位。
 * 通过ClassPathResource载入
