@@ -7,6 +7,10 @@
     http://www.springframework.org/schema/beans/spring-beans.xsd
         http://www.springframework.org/schema/context  
        http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+       
+     <context:component-scan base-package="ca.mcmaster.spring"/>
+    <!--只会扫描属性上的注解-->
+    <context:annotation-config></context:annotation-config>
 
  	<bean id="customer" class="ca.mcmaster.spring.Customer" scope="singleton">
 		<property name="name" value="BigSean"/>
@@ -18,11 +22,41 @@
   	<bean id="student" class="ca.mcmaster.spring.di.Student" scope="singleton">
   		<property name="name" value="Sean"/>
   		<property name="age" value="25"/>
-  		<property name="customer" ref="customer"/>
+  		<property name="customer.name" value="BBBB"/>
+  		<property name="hobbies">
+  			<list>
+  				<value>basketball</value>
+  				<value>swimming</value>
+  				<value>football</value>
+  			</list>
+  		</property>
+  		<property name="set">
+  			<set>
+  				<value>basketball1</value>
+  				<value>swimming1</value>
+  				<value>football1</value>
+  			</set>
+  		</property>
+  		<property name="map">
+  			<map>
+  				<entry key="k1" value="v1"/>
+  				<entry key="k2" value="v2"/>
+  				<entry key="k3" value="v3"/>
+  				<entry key="k4" value="v4"/>
+  			</map>
+  		</property>
+  		<property name="properties">
+  			<props>
+  				<prop key="name">SeanForFun</prop>
+  				<prop key="place">McMaster</prop>
+  			</props>
+  		</property>
   	</bean>
   	
 	<bean id="car" class="ca.mcmaster.spring.di.Car" scope="singleton">
   		<constructor-arg name="brand" value="RAV4" type="java.lang.String"/>
   		<constructor-arg name="color" value="GREY" type="java.lang.String"/>
   	</bean>
+  	<bean id="carFactory" class="ca.mcmaster.spring.di.CarFactory" scope="singleton"/>
+  	<bean id="bmw" factory-bean="carFactory" factory-method="getInstance"></bean>
 </beans>

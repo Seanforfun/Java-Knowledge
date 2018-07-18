@@ -444,6 +444,116 @@ public class CarFactory {
  <bean id="bmw" factory-bean="carFactory" factory-method="getInstance"></bean>
 ```
 
+4. 联级注入
+> Spring允许联级注入，但是在内部的引用对象时必须要已经实例化。
+
+* Java属性定义
+`private Customer customer = new Customer();`
+* xml配置
+`<property name="customer.name" value="BBBB"/>`
+
+5. 集合类型属性注入
+	* List
+		```java
+		private List<String> hobbies = new ArrayList<>();	//此处我们要将集合实例化，不然我们要重新定义一个bean，将这个bean传入。
+		```
+		```xml
+		<property name="hobbies">
+  			<list>
+  				<value>basketball</value>
+  				<value>swimming</value>
+  				<value>football</value>
+  			</list>
+  		</property>
+		```
+	* Set
+		```Java
+		private Set<String> set = new HashSet<>();
+		```
+		```xml
+		<property name="set">
+  			<set>
+  				<value>basketball1</value>
+  				<value>swimming1</value>
+  				<value>football1</value>
+  			</set>
+  		</property>
+		```
+	* Map
+		```Java
+		private Map<String, String> map = new HashMap<String, String>();
+		```
+		```xml
+		<property name="map">
+  			<map>
+  				<entry key="k1" value="v1"/>
+  				<entry key="k2" value="v2"/>
+  				<entry key="k3" value="v3"/>
+  				<entry key="k4" value="v4"/>
+  			</map>
+  		</property>
+		```
+	* Properties
+		```Java
+		private Properties properties = new Properties();
+		```
+		```xml
+		<property name="properties">
+  			<props>
+  				<prop key="name">SeanForFun</prop>
+  				<prop key="place">McMaster</prop>
+  			</props>
+  		</property>
+		```
+
+#### 通过注解实例化和注入
+1. 在类上通过`@Component`进行声明。同时还有`@Service`, `@Repository`，`@Configure`等等，这样的类将会被扫描。
+2. 在生成引用对象的方法上可以标注`@Bean`，这样会将Bean对象注册到IoC容器中，我们可以通过规则获取对象。
+
+```Java
+@Component(value="computer")	//将当前类的对象定义为id为computer的对象，可以定义scope
+@Scope("singleton")
+public class Computer {
+	@Value(value="MacBook")	//通过该注解注入基本数据类型
+	private String brand;
+	@Autowired	//通过该属性注入对象
+	@Qualifier("student")
+	private Student student;
+	@Resource(name="colorList")
+	private List<String> colorList;
+	@Bean(name="colorList")	//会将方法的返回值作为一个Bean对象注册到IoC容器中。
+	public List<Student> testList(Student student){	//此处student会按照规则注入，此处注入的即为上面的student对象。
+		List<Student> testList = new ArrayList<>();
+		testList.add(student);
+		return testList;
+	}
+	public List<String> getColorList() {
+		return colorList;
+	}
+	public void setColorList(List<String> colorList) {
+		this.colorList = colorList;
+	}
+	public Student getStudent() {
+		return student;
+	}
+	public void setStudent(Student student) {
+		this.student = student;
+	}
+	public String getBrand() {
+		return brand;
+	}
+	public void setBrand(String brand) {
+		this.brand = brand;
+	}
+	public void printNow(){
+		System.out.println("Haha");
+	}
+	public void printStudent(){
+		System.out.println(this.student);
+	}
+}
+```
+
 ### IoC容器的初始化
 1. BeanDefinition的Resource定位。
 * 通过ClassPathResource载入
