@@ -22,8 +22,8 @@ import org.springframework.stereotype.Component;
 public class Computer {
 	@Value(value="MacBook")
 	private String brand;
-	@Autowired
-	@Qualifier("student")
+//	@Autowired
+//	@Qualifier("student")
 	private Student student;
 	
 	@Resource(name="colorList")
@@ -43,7 +43,8 @@ public class Computer {
 	public Student getStudent() {
 		return student;
 	}
-	public void setStudent(Student student) {
+	@Autowired
+	public void setStudent(@Qualifier("student") Student student) {
 		this.student = student;
 	}
 	public String getBrand() {

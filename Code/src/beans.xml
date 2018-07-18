@@ -53,10 +53,25 @@
   		</property>
   	</bean>
   	
+  	<bean id="abstracatCar" class="ca.mcmaster.spring.di.Car" abstract="true">
+  		<property name="brand" value="RAV4"/>
+  	</bean>
+  	
+  	<bean id="redCar" class="ca.mcmaster.spring.di.Car" parent="abstracatCar">
+  		<property name="color" value="red"/>
+  	</bean>
+  	
+  	<bean id="teslaCar" class="ca.mcmaster.spring.di.CarFactoryBean">
+  		<property name="carInfo" value="This is a while tesla."/>
+  	</bean>
+  	
 	<bean id="car" class="ca.mcmaster.spring.di.Car" scope="singleton">
   		<constructor-arg name="brand" value="RAV4" type="java.lang.String"/>
   		<constructor-arg name="color" value="GREY" type="java.lang.String"/>
   	</bean>
   	<bean id="carFactory" class="ca.mcmaster.spring.di.CarFactory" scope="singleton"/>
   	<bean id="bmw" factory-bean="carFactory" factory-method="getInstance"></bean>
+  	<bean id="lookupDi" class="ca.mcmaster.spring.di.LookupDi">
+  		<lookup-method name="getStudent" bean="student"/>
+  	</bean>
 </beans>

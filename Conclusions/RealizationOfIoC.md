@@ -1,4 +1,4 @@
-# Realization of IoC
+# IoC
 > 面向对象的处理中，对象封装了数据和堆数据的处理，对象的依赖关系常常体现在对数据和方法的依赖上。所以我们可以将对象之间的依赖交给IoC容器去处理，减少了对象之间的耦合。
 
 ### What is Inversed?
@@ -453,58 +453,74 @@ public class CarFactory {
 `<property name="customer.name" value="BBBB"/>`
 
 5. 集合类型属性注入
-	* List
-		```java
-		private List<String> hobbies = new ArrayList<>();	//此处我们要将集合实例化，不然我们要重新定义一个bean，将这个bean传入。
-		```
-		```xml
-		<property name="hobbies">
-  			<list>
-  				<value>basketball</value>
-  				<value>swimming</value>
-  				<value>football</value>
-  			</list>
-  		</property>
-		```
-	* Set
-		```Java
-		private Set<String> set = new HashSet<>();
-		```
-		```xml
-		<property name="set">
-  			<set>
-  				<value>basketball1</value>
-  				<value>swimming1</value>
-  				<value>football1</value>
-  			</set>
-  		</property>
-		```
-	* Map
-		```Java
-		private Map<String, String> map = new HashMap<String, String>();
-		```
-		```xml
-		<property name="map">
-  			<map>
-  				<entry key="k1" value="v1"/>
-  				<entry key="k2" value="v2"/>
-  				<entry key="k3" value="v3"/>
-  				<entry key="k4" value="v4"/>
-  			</map>
-  		</property>
-		```
-	* Properties
-		```Java
-		private Properties properties = new Properties();
-		```
-		```xml
-		<property name="properties">
-  			<props>
-  				<prop key="name">SeanForFun</prop>
-  				<prop key="place">McMaster</prop>
-  			</props>
-  		</property>
-		```
+* List
+```java
+private List<String> hobbies = new ArrayList<>();	//此处我们要将集合实例化，不然我们要重新定义一个bean，将这个bean传入。
+```
+```xml
+<property name="hobbies">
+ 	<list>
+ 		<value>basketball</value>
+ 		<value>swimming</value>
+ 		<value>football</value>
+ 	</list>
+ </property>
+```
+* Set
+```Java
+private Set<String> set = new HashSet<>();
+```
+```xml
+<property name="set">
+  <set>
+  	<value>basketball1</value>
+  	<value>swimming1</value>
+  	<value>football1</value>
+  </set>
+</property>
+```
+* Map
+```Java
+private Map<String, String> map = new HashMap<String, String>();
+```
+```xml
+<property name="map">
+	<map>
+		<entry key="k1" value="v1"/>
+  		<entry key="k2" value="v2"/>
+  		<entry key="k3" value="v3"/>
+  		<entry key="k4" value="v4"/>
+  	</map>
+</property>
+```
+* Properties
+```Java
+private Properties properties = new Properties();
+```
+```xml
+<property name="properties">
+	<props>
+		<prop key="name">SeanForFun</prop>
+		<prop key="place">McMaster</prop>
+	</props>
+</property>
+```
+* 通过spring的utils命名空间添加集合对象
+![utils命名空间](https://i.imgur.com/57JRhhF.png)
+
+* 通过look-up method方法注入
+> 用于为接口的方法提供默认的返回值，底层是通过CGLib实现的。
+
+```Java
+public interface LookupDi {
+	public Student getStudent();
+}
+```
+```xml
+<bean id="lookupDi" class="ca.mcmaster.spring.di.LookupDi">
+	<lookup-method name="getStudent" bean="student"/>
+</bean>
+```
 
 #### 通过注解实例化和注入
 1. 在类上通过`@Component`进行声明。同时还有`@Service`, `@Repository`，`@Configure`等等，这样的类将会被扫描。
@@ -552,6 +568,67 @@ public class Computer {
 		System.out.println(this.student);
 	}
 }
+```
+
+#### bean的继承
+1. 可以通过配置抽象Spring实例并设置共有的属性值。
+2. 可以通过配置子对象实例继承自父类。
+
+```xml
+<bean id="abstracatCar" class="ca.mcmaster.spring.di.Car" abstract="true">
+	<property name="brand" value="RAV4"/>
+</bean>
+<bean id="redCar" class="ca.mcmaster.spring.di.Car" parent="abstracatCar">
+	<property name="color" value="red"/>
+</bean>
+```
+
+#### bean的依赖
+![bean的依赖](https://i.imgur.com/CKRn3L0.png)
+
+#### 多个配置文件之间的引用
+![多个配置文件之间的引用](https://i.imgur.com/z19mfSe.png)
+
+#### FactoryBean
+> Bean实现FactoryBean，创建对象时，会通过反射机制调用工厂类，并调用getObject方法获得对象。
+```Java
+public class CarFactoryBean implements FactoryBean<Car> {
+	private String carInfo;
+	public String getCarInfo() {
+		return carInfo;
+	}
+	public void setCarInfo(String carInfo) {
+		this.carInfo = carInfo;
+	}
+	@Override
+	public Car getObject() throws Exception {
+		Car car = new Car();
+		car.setBrand("TESLA");
+		car.setColor("white");
+		return car;
+	}
+	@Override
+	public Class<?> getObjectType() {
+		return Car.class;
+	}
+	@Override
+	public boolean isSingleton() {
+		return false;
+	}
+}
+```
+```xml
+<bean id="teslaCar" class="ca.mcmaster.spring.di.CarFactoryBean">
+	<property name="carInfo" value="This is a while tesla."/>
+</bean>
+```
+
+#### get/set方法传参
+```Java
+	@Autowired
+	public void setStudent(@Qualifier("student") Student student) {	//会根据配置传入student实例。
+		this.student = student;
+	}
 ```
 
 ### IoC容器的初始化

@@ -11,6 +11,9 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class Car {
 	private String brand;
 	private String color;
+	public Car(){
+		
+	}
 	public Car(String brand, String color){
 		this.brand = brand;
 		this.color = color;
