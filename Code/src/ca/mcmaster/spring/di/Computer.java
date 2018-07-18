@@ -3,11 +3,15 @@ package ca.mcmaster.spring.di;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -22,8 +26,8 @@ import org.springframework.stereotype.Component;
 public class Computer {
 	@Value(value="MacBook")
 	private String brand;
-//	@Autowired
-//	@Qualifier("student")
+	@Autowired
+	@Qualifier("student")
 	private Student student;
 	
 	@Resource(name="colorList")
@@ -58,5 +62,20 @@ public class Computer {
 	}
 	public void printStudent(){
 		System.out.println(this.student);
+	}
+	@PostConstruct
+	public void postConstruct(){
+		System.out.println("PostConstruct");
+	}
+	@PreDestroy
+	public void preDestroy(){
+		System.out.println("preDestroy");
+	}
+	public static void main(String[] args) {
+		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
+		ctx.register(Computer.class);
+		ctx.refresh();
+		Computer computer = (Computer) ctx.getBean("computer");
+		System.out.println(computer.getBrand());
 	}
 }

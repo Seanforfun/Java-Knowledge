@@ -617,6 +617,7 @@ public class CarFactoryBean implements FactoryBean<Car> {
 	}
 }
 ```
+
 ```xml
 <bean id="teslaCar" class="ca.mcmaster.spring.di.CarFactoryBean">
 	<property name="carInfo" value="This is a while tesla."/>
@@ -629,6 +630,19 @@ public class CarFactoryBean implements FactoryBean<Car> {
 	public void setStudent(@Qualifier("student") Student student) {	//会根据配置传入student实例。
 		this.student = student;
 	}
+```
+
+#### @PostConstruct | @PreDestroy
+> 在方法内部对生命周期进行影响，会通过注解反射调用所标注的方法。
+```Java
+@PostConstruct
+public void postConstruct(){
+	System.out.println("PostConstruct");
+}
+@PreDestroy
+public void preDestroy(){
+	System.out.println("preDestroy");
+}
 ```
 
 ### IoC容器的初始化

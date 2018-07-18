@@ -11,6 +11,20 @@
      <context:component-scan base-package="ca.mcmaster.spring"/>
     <!--只会扫描属性上的注解-->
     <context:annotation-config></context:annotation-config>
+    
+    <!-- 引入properties文件 -->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+<!--     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" scope="singleton">
+    	<property name="location" value="classpath:jdbc.properties"/>
+    	<property name="fileEncoding" value="utf-8"></property>
+    </bean> -->
+    
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+    	<property name="driverClassName" value="${driverClassName}"/>
+    	<property name="url" value="${url}"/>
+    	<property name="username" value="${username}"/>
+    	<property name="password" value="${password}"/>
+    </bean>
 
  	<bean id="customer" class="ca.mcmaster.spring.Customer" scope="singleton">
 		<property name="name" value="BigSean"/>
@@ -74,4 +88,5 @@
   	<bean id="lookupDi" class="ca.mcmaster.spring.di.LookupDi">
   		<lookup-method name="getStudent" bean="student"/>
   	</bean>
+  	<!-- <bean id="testDemo" class="ca.mcmaster.spring.di.TestDemo"></bean> -->
 </beans>
