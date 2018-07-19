@@ -249,3 +249,178 @@ Hello Sean! Today is 19/07/18 10:34 AM!
 ```
 
 * 可以通过ReloadableResourceBundleMessageSource来设置cacheSeconds使框架会刷新resource文件。
+
+### 容器事件
+> Spring的ApplicationContext能够发布事件并且允许注册相应的事件监听器，它拥有一套完善的事件发布和监听机制。
+
+#### 事件体系（实际上使用的即是观察者模式）
+* 事件源：事件的生产值，任何一个事件都要有一个事件源。
+* 监听器注册表: 用于存储事件监听器。
+* 事件广播器：用于将事件发布给事件监听器。
+
+![事件体系](https://i.imgur.com/DwxGqVW.png)
+
+#### Spring事件结构
+![Spring事件结构](https://i.imgur.com/9IucCjs.png)
+1. 和容器相关的事件继承了ApplicationContextEvent,并定义了容器的关闭，刷新，启动和停止事件。
+2. 和网络相关的事件需要在web.xml中定义DispatcherServlet，分别代表了servlet和Portlet请求事件。
+
+#### Spring事件监听接口
+![Spring事件监听接口](https://i.imgur.com/SMWXxSQ.png)
+1. 实现onApplicationEvent(E event)方法，事件进行相应。
+2. supportsEventType(Class<? extends ApplicationEvent> eventType)：定义何种事件可以被响应。
+3. supportsSourceType(Class<?> sourceType)：什么样的消息源可以被响应。
+
+#### 事件广播器
+![事件广播器](https://i.imgur.com/eANohIs.png)
+
+1. 容器主控程序会通过事件广播器将事件通知给注册表中的事件监听器，监听器会对事件分别进行相应。
+
+#### Spring事件体系的实现
+1. 初始化事件广播器initApplicationEventMulticaster
+```Java
+protected void initApplicationEventMulticaster() {
+	ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+	//如果当前的beanFactory已经存在了一个广播器则获取当前的广播器。
+	if (beanFactory.containsLocalBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME)) {
+		this.applicationEventMulticaster =
+				beanFactory.getBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, ApplicationEventMulticaster.class);
+		if (logger.isDebugEnabled()) {
+			logger.debug("Using ApplicationEventMulticaster [" + this.applicationEventMulticaster + "]");
+		}
+	}
+	else {
+	//如果当前beanfactory还没有广播器则生成并注册。
+		this.applicationEventMulticaster = new SimpleApplicationEventMulticaster(beanFactory);
+		beanFactory.registerSingleton(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, this.applicationEventMulticaster);
+		if (logger.isDebugEnabled()) {
+			logger.debug("Unable to locate ApplicationEventMulticaster with name '" +
+					APPLICATION_EVENT_MULTICASTER_BEAN_NAME +
+					"': using default [" + this.applicationEventMulticaster + "]");
+		}
+	}
+}
+```
+
+2. 注册事件监听器registerListeners
+```Java
+protected void registerListeners() {
+	// Register statically specified listeners first.
+	for (ApplicationListener<?> listener : getApplicationListeners()) {
+		// 将所有的事件接听器注册到事件广播器中
+		getApplicationEventMulticaster().addApplicationListener(listener);
+	}
+	// Do not initialize FactoryBeans here: We need to leave all regular beans
+	// uninitialized to let post-processors apply to them!
+	// 通过反射将所有的ApplicationListener的bean名称并将这些bean对象加入广播器中。
+	String[] listenerBeanNames = getBeanNamesForType(ApplicationListener.class, true, false);
+	for (String lisName : listenerBeanNames) {
+		getApplicationEventMulticaster().addApplicationListenerBean(lisName);
+	}
+}
+```
+
+3. 发布事件publishEvent
+```Java
+public void publishEvent(ApplicationEvent event) {
+	Assert.notNull(event, "Event must not be null");
+	if (logger.isTraceEnabled()) {
+		logger.trace("Publishing event in " + getDisplayName() + ": " + event);
+	}
+	getApplicationEventMulticaster().multicastEvent(event);	//将事件发布
+	if (this.parent != null) {
+		this.parent.publishEvent(event);
+	}
+}
+```
+
+4. 事件发布的实例
+* 定义事件
+```Java
+public class MailSendEvent extends ApplicationContextEvent {
+	private String to;
+	public MailSendEvent(ApplicationContext source, String to) {
+		super(source);
+		this.to = to;
+	}
+	public String getTo() {
+		return to;
+	}
+}
+```
+
+* 事件监听器
+```Java
+public class MailSendListener implements ApplicationListener<MailSendEvent> {
+	/* (non-Javadoc)
+	 * @see org.springframework.context.ApplicationListener#onApplicationEvent(org.springframework.context.ApplicationEvent)
+	 * 对事件进行处理。即是事件响应的处理事件。
+	 */
+	@Override
+	public void onApplicationEvent(MailSendEvent event) {
+		System.out.println("MailSendListener: Send mail to " + event.getTo() + ".");
+	}
+}
+```
+
+* 事件的发布
+> 只有实现了ApplicationContextAware才会被spring调用，将当前的bean容器加入bean对象使当前对象调用上下文信息。
+
+```Java
+@Component("mailSender")
+public class MailSender implements ApplicationContextAware {
+	private ApplicationContext applicationContext;
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext)
+			throws BeansException {
+		//将容器注册
+		this.applicationContext = applicationContext;
+	}
+	public void sendMail(String to){
+		System.out.println("MailSender: Send a mail!");
+		//创建一个发送事件
+		MailSendEvent mailSendEvent = new MailSendEvent(this.applicationContext, to);
+		//发布事件
+		applicationContext.publishEvent(mailSendEvent);
+	}
+}
+```
+
+* 事件的调用
+```Java
+mailSender.sendMail("xiaob6@mcmaster.ca");	//发送过程中会创建事件，并将事件发布。
+```
+
+* 而Spring框架会调用multicastEvent方法，调用线程池，开启线程执行响应
+```Java
+	public void multicastEvent(final ApplicationEvent event) {
+		for (final ApplicationListener<?> listener : getApplicationListeners(event)) {
+			Executor executor = getTaskExecutor();
+			if (executor != null) {
+				executor.execute(new Runnable() {
+					@Override
+					public void run() {
+						invokeListener(listener, event);
+					}
+				});
+			}
+			else {
+				invokeListener(listener, event);
+			}
+		}
+	}
+	protected void invokeListener(ApplicationListener listener, ApplicationEvent event) {
+		ErrorHandler errorHandler = getErrorHandler();
+		if (errorHandler != null) {
+			try {	//调用监听器的响应方法
+				listener.onApplicationEvent(event);
+			}
+			catch (Throwable err) {
+				errorHandler.handleError(err);
+			}
+		}
+		else {
+			listener.onApplicationEvent(event);
+		}
+	}
+```
