@@ -1,26 +1,30 @@
-package ca.mcmaster.spring.di;
+package ca.mcmaster.spring.i18n;
+
+import java.util.GregorianCalendar;
+import java.util.Locale;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * @author SeanForFun E-mail:xiaob6@mcmaster.ca
- * @date Jul 18, 2018 4:02:20 PM
+ * @date Jul 19, 2018 10:59:56 AM
  * @version 1.0
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations={"classpath:beans.xml"})
-public class MyDataSourceTest {
+public class MyResourceBundleTest {
 	@Autowired
-	@Qualifier("myDataSource")
-	private MyDataSource dataSource;
+	@Qualifier("myResource")
+	private MessageSource messageSource;
 	@Test
 	public void test() {
-		System.out.println(dataSource.getDriverClassName());
-		System.out.println(dataSource.getUrl());
+		String message = messageSource.getMessage("greeting.common", new Object[]{"Jenny", new GregorianCalendar().getTime()}, Locale.CANADA);
+		System.out.println(message);
 	}
 }

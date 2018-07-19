@@ -17,7 +17,7 @@ public class MyDataSource {
 	@Value("${username}")
 	private String username;
 	@Value("${password}")
-	private String password;
+	private String password;	
 	public String getDriverClassName() {
 		return driverClassName;
 	}

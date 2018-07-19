@@ -63,14 +63,14 @@ public class Computer {
 	public void printStudent(){
 		System.out.println(this.student);
 	}
-	@PostConstruct
-	public void postConstruct(){
-		System.out.println("PostConstruct");
-	}
-	@PreDestroy
-	public void preDestroy(){
-		System.out.println("preDestroy");
-	}
+//	@PostConstruct
+//	public void postConstruct(){
+//		System.out.println("PostConstruct");
+//	}
+//	@PreDestroy
+//	public void preDestroy(){
+//		System.out.println("preDestroy");
+//	}
 	public static void main(String[] args) {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(Computer.class);

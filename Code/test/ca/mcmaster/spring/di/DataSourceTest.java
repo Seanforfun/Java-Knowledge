@@ -19,7 +19,7 @@ public class DataSourceTest {
 //	@Autowired
 //	private Car redCar;
 	@Autowired
-	@Qualifier("myDataSource")
+	@Qualifier("dataSource")
 	private BasicDataSource dataSource;
 	@Test
 	public void test() {

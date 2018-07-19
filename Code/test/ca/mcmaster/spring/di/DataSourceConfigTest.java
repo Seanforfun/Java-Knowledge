@@ -9,18 +9,17 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * @author SeanForFun E-mail:xiaob6@mcmaster.ca
- * @date Jul 18, 2018 4:02:20 PM
+ * @date Jul 19, 2018 9:23:51 AM
  * @version 1.0
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations={"classpath:beans.xml"})
-public class MyDataSourceTest {
+public class DataSourceConfigTest {
 	@Autowired
-	@Qualifier("myDataSource")
-	private MyDataSource dataSource;
+	@Qualifier("dataSourceConfig")
+	private DataSourceConfig dataSourceConfig;
 	@Test
 	public void test() {
-		System.out.println(dataSource.getDriverClassName());
-		System.out.println(dataSource.getUrl());
+		System.out.println(dataSourceConfig.getMaxTimeOut());
 	}
 }
