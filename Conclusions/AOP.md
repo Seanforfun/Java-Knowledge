@@ -84,3 +84,91 @@ public class CglibProxy implements MethodInterceptor {
 	}
 }
 ```
+
+* Spring的ProxyFactory类
+```Java
+
+```
+
+### 增强类
+#### 前置增强
+1. 通过继承MethodBeforeAdvice实现before方法，并在before中实现要织入的前置增强。
+```Java
+// 定义前置增强的方法
+public void before(Method arg0, Object[] args, Object arg2) throws Throwable {
+	String name = (String) args[0];
+	System.out.println("Hello Mr/Ms. " + name);
+}
+	@Test
+	public void test() {
+		Waiter waiter = new NaiveWaiter();
+		BeforeAdvice greetBeforeAdvice = new GreetBeforeAdvice();
+		ProxyFactory pf = new ProxyFactory(waiter);	//通过Spring代理工厂的方法生成代理对象。
+		pf.addAdvice(greetBeforeAdvice);	//织入前置增强。
+		Waiter proxy = (Waiter) pf.getProxy();
+		proxy.greetTo("Sean");
+	}
+```
+
+#### 通过xml配置生成代理，织入前置增强
+```xml
+<!-- 通过ProxyFactoryBean配置代理 -->
+<!-- 定义了前置增强的方法 -->
+<bean id="greetingAdvice" class="ca.mcmaster.spring.aop.GreetBeforeAdvice"/>
+<!-- 要生成代理的对象 -->
+<bean id="target" class="ca.mcmaster.spring.aop.NaiveWaiter"/>
+<!-- 生成的代理对象 -->
+<bean id="waiter" class="org.springframework.aop.framework.ProxyFactoryBean" scope="singleton">
+	<property name="proxyInterfaces" value="ca.mcmaster.spring.aop.Waiter"/>
+	<!-- 要织入的增强 -->
+	<property name="interceptorNames" value="greetingAdvice"/>
+	<property name="target" ref="target"/>
+	<!-- 如果设置为true，则强制使用CgLib， 单例适合CgLin，JDK适合其他-->
+	<!-- Cglib创建慢，效率高， JDK Proxy创建快，效率低-->
+	<property name="optimize" value="true"/>
+</bean>
+```
+
+#### 后置增强
+1. 通过实现AfterReturningAdvice接口实现后置增强。xml配置和前置增强类似。
+```Java
+public class GreetingAfterAdvice implements AfterReturningAdvice {
+	@Override
+	public void afterReturning(Object returnValue, Method method,
+			Object[] args, Object target) throws Throwable {
+		String name = (String) args[0];
+		System.out.println("Goodbye " + name);
+	}
+}
+```
+
+#### 环绕增强
+1. 通过实现MethodInterceptor接口并实现invoke方法。
+```Java
+public class GreetingInterceptor implements MethodInterceptor {
+	@Override
+	public Object invoke(MethodInvocation invocation) throws Throwable {
+		Object[] arguments = invocation.getArguments();
+		String name = (String) arguments[0];
+		System.out.println("Hi! " + name);	//环绕前增强
+		invocation.proceed();	//对实际的方法调用。
+		System.out.println("Goodbye! " + name);	//环绕后增强
+		return null;
+	}
+}
+```
+
+#### 异常抛出增强
+1. 用于增强抛出异常后的情况，可以用于事务的回滚。
+2. 需要实现ThrowsAdvice。
+```Java
+public class GreetAfterException implements ThrowsAdvice {
+	public void afterThrowing(Method method, Object[] args, Object target, Exception ex) throws Throwable{
+		System.out.println("Get exception: " + ex.getMessage());
+		System.out.println("Method: " + method.getName());
+	}
+}
+```
+
+
+

@@ -103,4 +103,24 @@
   		<lookup-method name="getStudent" bean="student"/>
   	</bean>
   	<!-- <bean id="testDemo" class="ca.mcmaster.spring.di.TestDemo"></bean> -->
+  	
+  	<!-- 通过ProxyFactoryBean配置代理 -->
+  	<!-- 定义了前置增强的方法 -->
+  	<bean id="greetingAdvice" class="ca.mcmaster.spring.aop.GreetBeforeAdvice"/>
+  	<!-- 定义后置增强 -->
+  	<bean id="greetingAfter" class="ca.mcmaster.spring.aop.GreetingAfterAdvice"/>
+  	<!-- 定义环绕增强 -->
+  	<bean id="greetingRound" class="ca.mcmaster.spring.aop.GreetingInterceptor"/>
+  	<!-- 定义异常后增强 -->
+  	<bean id="greetingException" class="ca.mcmaster.spring.aop.GreetAfterException"/>
+  	<!-- 要生成代理的对象 -->
+  	<bean id="target" class="ca.mcmaster.spring.aop.NaiveWaiter"/>
+  	<!-- 生成的代理对象 -->
+  	<bean id="waiter" class="org.springframework.aop.framework.ProxyFactoryBean" scope="singleton">
+  		<property name="proxyInterfaces" value="ca.mcmaster.spring.aop.Waiter"/>
+  		<!-- 要织入的增强 -->
+  		<property name="interceptorNames" value="greetingAdvice, greetingAfter, greetingRound, greetingException"/>
+  		<property name="target" ref="target"/>
+  		<property name="optimize" value="true"/>
+  	</bean>
 </beans>
