@@ -35,4 +35,7 @@ public class Car {
 		Car car = (Car) ctx.getBean("car");
 		System.out.println(car.getBrand());
 	}
+	public void run(){
+		System.out.println("Run!!!!!");
+	}
 }
