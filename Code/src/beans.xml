@@ -146,10 +146,29 @@
   		<!-- 将通知织入切面 -->
   		<property name="advice" ref="greetingBeforeAdvice"/>
   	</bean>
+  	<!-- 通过正则表达式对方法和类进行匹配 -->
+  	<bean id="regexAdvisor" class="org.springframework.aop.support.RegexpMethodPointcutAdvisor">
+  		<property name="advice" ref="greetingBeforeAdvice"/>
+  		<property name="patterns">
+  			<list>
+  				<!-- 通过正则匹配所有包含greet的方法 -->
+  				<value>.*greet.*</value>
+  			</list>
+  		</property>
+  	</bean>
+  	<!-- 通过动态匹配对传入的参数进行动态匹配 -->
+  	<bean id="dynamicAdvisor" class="org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor">
+  		<!-- 通过匿名内部类定义切点实例 -->
+  		<property name="pointcut">
+  			<bean class="ca.mcmaster.spring.aop.wiring.GreetingDynamicPointcut"/>
+  		</property>
+  		<!-- 通过匿名内部类定义前置增强的实例 -->
+  		<property name="advice" ref="greetingBeforeAdvice"/>
+  	</bean>
   	<!-- 将切面织入代理对象 -->
   	<!-- 定义了要生成的多个Bean对象代理的父类 -->
   	<bean id="parent" class="org.springframework.aop.framework.ProxyFactoryBean" abstract="true">
-  		<property name="interceptorNames" value="greetingAdvisor"/>
+  		<property name="interceptorNames" value="dynamicAdvisor"/>
   		<property name="proxyTargetClass" value="true"/>
   	</bean>
   	<bean id="waiterProxy" parent="parent">

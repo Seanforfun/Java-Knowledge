@@ -283,3 +283,98 @@ public class GreetingAdvisor extends StaticMethodMatcherPointcutAdvisor {
 	}
 }
 ```
+
+3. 实现注入，进行测试
+```Java
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations={"classpath:beans.xml"})
+public class GreetingAdvisorTest {
+	@Autowired
+	@Qualifier("waiterProxy")
+	private Waiter waiterProxy;
+	@Autowired
+	@Qualifier("sellerProxy")
+	private Seller sellerProxy;
+	@Test
+	public void test() {
+		System.out.println(waiterProxy);
+		waiterProxy.greetTo("Sean");
+		sellerProxy.greetTo("Seanforfun");
+	}
+}
+```
+
+#### 通过正则表达式匹配切面
+```xml
+<!-- 通过正则表达式对方法和类进行匹配 -->
+<bean id="regexAdvisor" class="org.springframework.aop.support.RegexpMethodPointcutAdvisor">
+	<property name="advice" ref="greetingBeforeAdvice"/>
+	<property name="patterns">
+		<list>
+			<!-- 通过正则匹配所有包含greet的方法 -->
+			<value>.*greet.*</value>
+		</list>
+	</property>
+</bean>
+```
+
+#### 动态切面
+1. 动态切面的动态体现在切点上，可以针对参数对方法进行增强。
+```Java
+public class GreetingDynamicPointcut extends DynamicMethodMatcherPointcut {
+	private static final List<String> names;
+	static{
+		names = new ArrayList<>();
+		names.add("Sean");
+		names.add("Irene");
+	}
+	@Override
+	public boolean matches(Method method, Class<?> targetClass, Object[] args) {
+		System.out.println("对" + method.getName() + "进行动态检查");
+		return names.contains((String)args[0]);	//检查参数是否符合要求
+	}
+	@Override
+	public ClassFilter getClassFilter() {
+		return new ClassFilter() {
+			@Override
+			public boolean matches(Class<?> clazz) {
+				return Waiter.class.isAssignableFrom(clazz);
+			}
+		};
+	}
+	@Override
+	public boolean matches(Method method, Class<?> targetClass) {
+		System.out.println("对" + method.getName() + "进行静态检查");
+		return "greetTo".equals(method.getName());
+	}
+}
+```
+
+2. 在xml中进行配置，实际上切面由pointcut和增强方法构成，所以我们要通过定义DefaultBeanFactoryPointcutAdvisor中的这两个选项来定义切面。
+```xml
+<!-- 通过动态匹配对传入的参数进行动态匹配 -->
+<bean id="dynamicAdvisor" class="org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor">
+	<!-- 通过匿名内部类定义切点实例 -->
+	<property name="pointcut">
+		<bean class="ca.mcmaster.spring.aop.wiring.GreetingDynamicPointcut"/>
+	</property>
+	<!-- 通过匿名内部类定义前置增强的实例 -->
+	<property name="advice" ref="greetingBeforeAdvice"/>
+</bean>
+```
+
+3. 测试
+```Java
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations={"classpath:beans.xml"})
+public class GreetingDynamicPointcutTest {
+	@Autowired
+	@Qualifier("waiterProxy")
+	private Waiter waiter;
+	@Test
+	public void test() {
+		waiter.greetTo("Irene");	//结果只会对注册了的名字进行增强。
+		waiter.greetTo("X.B");
+	}
+}
+```
