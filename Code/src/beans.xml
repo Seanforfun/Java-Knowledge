@@ -120,7 +120,42 @@
   		<property name="proxyInterfaces" value="ca.mcmaster.spring.aop.Waiter"/>
   		<!-- 要织入的增强 -->
   		<property name="interceptorNames" value="greetingAdvice, greetingAfter, greetingRound, greetingException"/>
+  		<!-- 要为哪个类生成代理 -->
   		<property name="target" ref="target"/>
+  		<!-- CGlib的运行效率是JDK proxy的10倍，但是JDK proxy的生成速度是CGLib的8倍，所以对于
+  		单例模式，我们希望使用CGLIB，因为在加载容器的时候我们就会生成所有的单例（除非懒加载），
+  		但是对于原型模式的对象，每次需要均会生成一个新对象，此时我们倾向于使用JDK Proxy。 -->
+  		<!-- 当optimize设置为true时，就会强制使用CGLIB。 -->
   		<property name="optimize" value="true"/>
+  		<!-- 选择是否使用对类进行代理(而不是对接口进行代理)，所以当这个选项设置为true时，
+  		强制使用CGLIB。 -->
+  		<property name="proxyTargetClass" value="true"/>
+  		<!-- 默认使用单例模式 -->
+  		<property name="singleton" value="true"/>
+  	</bean>
+  	
+  	<!-- 配置切面 -->
+  	<!-- seller和waiter的实例对象，将会为这两个对象生成代理 -->
+  	<bean id="waiterTarget" class="ca.mcmaster.spring.aop.wiring.Waiter" scope="singleton"/>
+  	<bean id="sellerTarget" class="ca.mcmaster.spring.aop.wiring.Seller" scope="singleton"/>
+  	<!-- 配置通知(增强的内容) -->
+  	<bean id="greetingBeforeAdvice" class="ca.mcmaster.spring.aop.wiring.GreetingBeforeAdvice" scope="singleton"/>
+  	<!-- 配置切面(内部定义增强的内容和切点) -->
+  	<!-- 其中对方法和类进行了匹配 -->
+  	<bean id="greetingAdvisor" class="ca.mcmaster.spring.aop.wiring.GreetingAdvisor" scope="singleton">
+  		<!-- 将通知织入切面 -->
+  		<property name="advice" ref="greetingBeforeAdvice"/>
+  	</bean>
+  	<!-- 将切面织入代理对象 -->
+  	<!-- 定义了要生成的多个Bean对象代理的父类 -->
+  	<bean id="parent" class="org.springframework.aop.framework.ProxyFactoryBean" abstract="true">
+  		<property name="interceptorNames" value="greetingAdvisor"/>
+  		<property name="proxyTargetClass" value="true"/>
+  	</bean>
+  	<bean id="waiterProxy" parent="parent">
+  		<property name="target" ref="waiterTarget"/>
+  	</bean>
+  	<bean id="sellerProxy" parent="parent">
+  		<property name="target" ref="sellerTarget"/>
   	</bean>
 </beans>

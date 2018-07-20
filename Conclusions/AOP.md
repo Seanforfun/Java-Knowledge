@@ -85,12 +85,40 @@ public class CglibProxy implements MethodInterceptor {
 }
 ```
 
-* Spring的ProxyFactory类
-```Java
-
+### 增强类
+* 增强的xml配置
+```xml
+<!-- 通过ProxyFactoryBean配置代理 -->
+<!-- 定义了前置增强的方法 -->
+<bean id="greetingAdvice" class="ca.mcmaster.spring.aop.GreetBeforeAdvice"/>
+<!-- 定义后置增强 -->
+<bean id="greetingAfter" class="ca.mcmaster.spring.aop.GreetingAfterAdvice"/>
+<!-- 定义环绕增强 -->
+<bean id="greetingRound" class="ca.mcmaster.spring.aop.GreetingInterceptor"/>
+<!-- 定义异常后增强 -->
+<bean id="greetingException" class="ca.mcmaster.spring.aop.GreetAfterException"/>
+<!-- 要生成代理的对象 -->
+<bean id="target" class="ca.mcmaster.spring.aop.NaiveWaiter"/>
+<!-- 生成的代理对象 -->
+<bean id="waiter" class="org.springframework.aop.framework.ProxyFactoryBean" scope="singleton">
+	<property name="proxyInterfaces" value="ca.mcmaster.spring.aop.Waiter"/>
+	<!-- 要织入的增强 -->
+	<property name="interceptorNames" value="greetingAdvice, greetingAfter, greetingRound, greetingException"/>
+	<!-- 要为哪个类生成代理 -->
+	<property name="target" ref="target"/>
+	<!-- CGlib的运行效率是JDK proxy的10倍，但是JDK proxy的生成速度是CGLib的8倍，所以对于
+	单例模式，我们希望使用CGLIB，因为在加载容器的时候我们就会生成所有的单例（除非懒加载），
+	但是对于原型模式的对象，每次需要均会生成一个新对象，此时我们倾向于使用JDK Proxy。 -->
+	<!-- 当optimize设置为true时，就会强制使用CGLIB。 -->
+	<property name="optimize" value="true"/>
+	<!-- 选择是否使用对类进行代理(而不是对接口进行代理)，所以当这个选项设置为true时，
+	强制使用CGLIB。 -->
+	<property name="proxyTargetClass" value="true"/>
+	<!-- 默认使用单例模式 -->
+	<property name="singleton" value="true"/>
+</bean>
 ```
 
-### 增强类
 #### 前置增强
 1. 通过继承MethodBeforeAdvice实现before方法，并在before中实现要织入的前置增强。
 ```Java
@@ -170,5 +198,88 @@ public class GreetAfterException implements ThrowsAdvice {
 }
 ```
 
+### 创建切面
+* 切面是Advise和PointCut的集合，在定义了切面后就知道增强是什么，要在哪个方法的那个位置进行增强。
 
+* Spring的切点类
+```Java
+public interface Pointcut {
+	ClassFilter getClassFilter();	//确定当前的类是否匹配过滤条件。
+	MethodMatcher getMethodMatcher();	//当前的方法是否匹配过滤条件。
+	Pointcut TRUE = TruePointcut.INSTANCE;
+}
+```
 
+#### 切点的类型
+1. 静态方法切点：org.springframework.aop.support.StaticMethodMatcherPointcut
+2. 动态方法切点：org.springframework.aop.support.DynamicMethodMatcherPointcut
+3. 注解切点：org.springframework.aop.support.annotation.AnnotationMatchingPointcut
+4. 表达式切点：org.springframework.aop.support.ExpressionPointcut
+5. 流程切点：org.springframework.aop.support.ControlFlowPointcut
+6. 复合切点：org.springframework.aop.support.ComposablePointcut
+
+#### 切面类型
+1. Advisor: 一般的切面，太过宽泛，不会直接使用。
+2. PointcutAdvisor: 具有切点的切面，包含Advise和Pointcut两个类，经常使用。
+3. IntroductionAdvisor:引介切面。
+
+#### 切面的xml配置，我个人觉得很繁琐，但是研究有助于对aop的理解
+```xml
+<!-- 配置切面 -->
+<!-- seller和waiter的实例对象，将会为这两个对象生成代理 -->
+<bean id="waiterTarget" class="ca.mcmaster.spring.aop.wiring.Waiter" scope="singleton"/>
+<bean id="sellerTarget" class="ca.mcmaster.spring.aop.wiring.Seller" scope="singleton"/>
+<!-- 配置通知(增强的内容) -->
+<bean id="greetingBeforeAdvice" class="ca.mcmaster.spring.aop.wiring.GreetingBeforeAdvice" scope="singleton"/>
+<!-- 配置切面(内部定义增强的内容和切点) -->
+<!-- 其中对方法和类进行了匹配 -->
+<bean id="greetingAdvisor" class="ca.mcmaster.spring.aop.wiring.GreetingAdvisor" scope="singleton">
+	<!-- 将通知织入切面 -->
+	<property name="advice" ref="greetingBeforeAdvice"/>
+</bean>
+<!-- 将切面织入代理对象 -->
+<!-- 定义了要生成的多个Bean对象代理的父类 -->
+<bean id="parent" class="org.springframework.aop.framework.ProxyFactoryBean" abstract="true">
+	<property name="interceptorNames" value="greetingAdvisor"/>
+	<property name="proxyTargetClass" value="true"/>
+</bean>
+<bean id="waiterProxy" parent="parent">
+	<property name="target" ref="waiterTarget"/>
+</bean>
+<bean id="sellerProxy" parent="parent">
+	<property name="target" ref="sellerTarget"/>
+</bean>
+```
+
+#### 切面的增强
+1. 前置增强
+```Java
+public class GreetingBeforeAdvice implements MethodBeforeAdvice {
+	@Override
+	public void before(Method method, Object[] args, Object target)
+			throws Throwable {
+		System.out.println("Wow! Hello " + args[0] + "!");
+	}
+}
+```
+
+2. 定义切面
+```Java
+public class GreetingAdvisor extends StaticMethodMatcherPointcutAdvisor {
+	@Override
+	public boolean matches(Method method, Class<?> targetClass) {
+		return "greetTo".equals(method.getName());	//方法匹配
+	}
+	@Override
+	public ClassFilter getClassFilter() {
+//		return super.getClassFilter();
+		return new ClassFilter() {
+			@Override
+			public boolean matches(Class<?> clazz) {
+				// 要匹配的类是不是clazz的子类。
+				return Waiter.class.isAssignableFrom(clazz);	//类匹配
+			}
+		};
+	}
+}
+```
