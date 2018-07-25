@@ -9,7 +9,7 @@ public class NaiveWaiter implements Waiter {
 	@Override
 	public void greetTo(String name) throws Exception {
 		System.out.println("Greet to " + name);
-		throw new RuntimeException(name +" said dirty words.");
+//		throw new RuntimeException(name +" said dirty words.");
 	}
 	@Override
 	public void serve(String name) {

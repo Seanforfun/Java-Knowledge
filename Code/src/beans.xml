@@ -3,14 +3,20 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:aop="http://www.springframework.org/schema/aop"
     xsi:schemaLocation="http://www.springframework.org/schema/beans
     http://www.springframework.org/schema/beans/spring-beans.xsd
         http://www.springframework.org/schema/context  
-       http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+       http://www.springframework.org/schema/context/spring-context-3.0.xsd
+       http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
        
      <context:component-scan base-package="ca.mcmaster.spring"/>
     <!--只会扫描属性上的注解-->
     <context:annotation-config></context:annotation-config>
+    
+    <!-- 基于@AspectJ切面的驱动器 -->
+    <aop:aspectj-autoproxy/>
     
     <!-- 引入properties文件 -->
     <context:property-placeholder location="classpath:jdbc.properties"/>
@@ -219,5 +225,12 @@
   	<!-- 通过切面生成代理 -->
   	<!-- 切面本身包括了增强方法和要增强的对象，这两个对象已经包括了足够的信息，
   	当匹配到了要被增强的对象时，会自动生成代理。 -->
-  	<bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"/>
+  	<!-- <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"/> -->
+  	
+  	<!-- 配置AspectJ -->
+  	<!-- 配置AspectJ切面bean -->
+ 	<!-- <bean class="ca.mcmaster.spring.aop.wiring.PreGreetingAspect"/> -->
+  	<!-- 该bean会自动扫描@AspectJ注解, 同时也会自动织入所有通过xml配置的切面 -->
+  	<!-- <bean class="org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator"/> -->
+  	
 </beans>
