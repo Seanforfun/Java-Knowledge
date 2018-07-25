@@ -378,3 +378,64 @@ public class GreetingDynamicPointcutTest {
 	}
 }
 ```
+
+#### 流程切面（慢！）
+> 流程切面多用于策略模式和门面模式的结合
+
+```Java
+public class WaiterDelegant {
+	private Waiter waiter;
+	public void setWaiter(Waiter waiter) {
+		this.waiter = waiter;
+	}
+	public void service(String clientName){
+		waiter.greetTo(clientName);	//我们只想对其中的某一个方法进行增强
+		waiter.serveTo(clientName);
+	}
+}
+```
+
+1. 通过xml进行流程切面
+```xml
+<!-- 通过设置流程切面 -->
+<!-- 针对某个类的对于某个方法的拦截 -->
+<bean id="controlFlowPointcut" class="org.springframework.aop.support.ControlFlowPointcut">
+	<constructor-arg name="clazz" value="ca.mcmaster.spring.aop.wiring.WaiterDelegant"/>
+	<constructor-arg name="methodName" value="greetTo"/>
+</bean>
+<!-- 配置切面，将切点和增强注入 -->
+<bean id="controlFlowAdvisor" class="org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor">
+	<property name="pointcut" ref="controlFlowPointcut"/>
+	<property name="advice" ref="greetingBeforeAdvice"/>
+</bean>
+```
+
+### 复合切面
+> 复合切面用于合并多种切点
+
+* 此段代码并没有完全成功，只是实现了流程控制并没有实现name match。
+```Java
+public class GreetingComposablePointcut {
+	public Pointcut getIntersectionPointcut(){
+		ComposablePointcut cp = new ComposablePointcut();
+		Pointcut pt1 = new ControlFlowPointcut(WaiterDelegant.class, "service");
+		NameMatchMethodPointcut pt2 = new NameMatchMethodPointcut();
+		pt2.addMethodName("greetTo");
+		cp.intersection((Pointcut)pt2).intersection(pt1);
+		return cp;
+	}
+}
+```
+
+```xml
+<!-- 设置复合切面 -->
+<bean id="composablePointcut" class="ca.mcmaster.spring.aop.wiring.GreetingComposablePointcut"/>
+<bean id="composableAdvisor" class="org.springframework.aop.support.DefaultPointcutAdvisor">
+	<property name="pointcut" value="#{composablePointcut.intersectionPointcut}"/>
+	<property name="advice" ref="greetingBeforeAdvice"/>
+</bean>
+
+### 自动创建代理
+> 当我们要进行织入的时候，我们需要使用代理。上面的代码中，所生成的代理对象都是通过ProxyFactoryBean进行生成的，较为麻烦。我们可以通过使用自动代理的机制，让容器为我们自动生成代理对象。
+
+#### 

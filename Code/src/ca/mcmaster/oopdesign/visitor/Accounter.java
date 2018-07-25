@@ -16,5 +16,4 @@ public class Accounter implements AccountBillViewer {
 		if(bill.getItem().equals("income"))
 			System.out.println("Check Income...");
 	}
-
 }

@@ -165,16 +165,54 @@
   		<!-- 通过匿名内部类定义前置增强的实例 -->
   		<property name="advice" ref="greetingBeforeAdvice"/>
   	</bean>
+  	<!-- 通过设置流程切面 -->
+  	<!-- <bean id="controlFlowPointcut" class="org.springframework.aop.support.ControlFlowPointcut">
+  		<constructor-arg name="clazz" value="ca.mcmaster.spring.aop.wiring.WaiterDelegant"/>
+  		<constructor-arg name="methodName" value="greetTo"/>
+  	</bean>
+  	<bean id="controlFlowAdvisor" class="org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor">
+  		<property name="pointcut" ref="controlFlowPointcut"/>
+  		<property name="advice" ref="greetingBeforeAdvice"/>
+  	</bean> -->
+  	<!-- 设置复合切面 -->
+  	<bean id="composablePointcut" class="ca.mcmaster.spring.aop.wiring.GreetingComposablePointcut"/>
+  	<bean id="composableAdvisor" class="org.springframework.aop.support.DefaultPointcutAdvisor">
+  		<property name="pointcut" value="#{composablePointcut.intersectionPointcut}"/>
+  		<property name="advice" ref="greetingBeforeAdvice"/>
+  	</bean>
   	<!-- 将切面织入代理对象 -->
   	<!-- 定义了要生成的多个Bean对象代理的父类 -->
   	<bean id="parent" class="org.springframework.aop.framework.ProxyFactoryBean" abstract="true">
-  		<property name="interceptorNames" value="dynamicAdvisor"/>
+  		<property name="interceptorNames" value="composableAdvisor"/>
   		<property name="proxyTargetClass" value="true"/>
   	</bean>
-  	<bean id="waiterProxy" parent="parent">
+  	<!-- 要生成一个代理对象，我们实际上还是要配置一个实际的对象，
+  	针对当前所给的对象进行代理生成 -->
+  	<!-- <bean id="waiterProxy" parent="parent">
   		<property name="target" ref="waiterTarget"/>
   	</bean>
   	<bean id="sellerProxy" parent="parent">
   		<property name="target" ref="sellerTarget"/>
+  	</bean>
+  	<bean id="waiterDelegant" class="ca.mcmaster.spring.aop.wiring.WaiterDelegant">
+  		<property name="waiter">
+  			<bean class="ca.mcmaster.spring.aop.wiring.Waiter"></bean>
+  		</property>
+  	</bean>
+  	<bean id="waiter1" class="org.springframework.aop.framework.ProxyFactoryBean">
+  		<property name="target" ref="waiterTarget"/>
+  		<property name="interceptorNames" value="composableAdvisor"/>
+  		<property name="proxyTargetClass" value="true"/>
+  	</bean> -->
+  	
+  	<!-- 使用bean名称进行自动代理 -->
+  	<bean class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator" >
+  		<property name="beanNames">
+  			<list>
+  				<value>*Target</value>
+  			</list>
+  		</property>
+  		<property name="interceptorNames" value="greetingBeforeAdvice"/>
+  		<property name="optimize" value="true"/>
   	</bean>
 </beans>
