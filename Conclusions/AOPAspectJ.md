@@ -89,9 +89,58 @@ Greet to Sean
 <context:annotation-config></context:annotation-config>
 ```
 
-#### AspectJ表达式
+#### AspectJ作用于方法的表达式
 1. execution(): 表达式主体。
 2. 第一个*号：表示返回类型，*号表示所有的类型。
 3. 包名：表示需要拦截的包名，后面的两个句点表示当前包和当前包的所有子包，com.sample.service.impl包、子孙包下所有类的方法。
 4. 第二个*号：表示类名，*号表示所有的类。
 5. *(..):最后这个星号表示方法名，*号表示所有的方法，后面括弧里面表示方法的参数，两个句点表示任何参数。
+
+#### 不同的增强类型
+* Before
+![Before](https://i.imgur.com/oWhTwja.png)
+![Before](https://i.imgur.com/qERbrtX.png)
+* AfterReturning
+![AfterReturning](https://i.imgur.com/OxwEcwu.png)
+* Around
+![Around](https://i.imgur.com/8Dwe515.png)
+* AfterThrowing
+![AfterThrowing](https://i.imgur.com/3QUNGiZ.png)
+* After
+![After](https://i.imgur.com/ykUiRi8.png)
+* DeclareParents
+![DeclareParents](https://i.imgur.com/6Z6rBEA.png)
+
+#### @annotation
+* @annotation注解起到了和execution类似的作用，aspectJ命名空间会自动扫描包含该注解的方法并进行方法的织入。
+```Java
+@AfterReturning("@annotation(ca.mcmaster.spring.aop.annotation.NeedTest)")
+	public void needTestFun(){
+		System.out.println("needTestFun() called");
+	}
+```
+
+#### 切点的复合运算
+1. 与运算&&， 可以通过定义两个execution表达书并通过&&连接，则能只对两个表达式的交集进行运算。
+2. 或表达式||，可以对两个execution表达式的并集进行运算。
+3. 非表达式！， 非表达式大多用于&&或||表达式中某个运算单元取反，很少单独使用。
+
+#### 织入的顺序
+1. 在同一个切面中，按照增强在切面中定义的顺序进行织入。
+2. 不同的切面中，如果均实现了org.springframework.core.Ordered方法，就会按照顺序从小到大执行织入。
+3. 如果位于不同的切面中，并且均没有实现org.springframework.core.Ordered方法，则织入的顺序是不确定的。
+
+#### 连接点的信息（JointPoint）
+> 我们之所以要使用jointpoint是因为我们想实现环绕式增强。
+
+```Java
+@Around("execution(* greetTo(..))")
+	public void jointPointAccess(ProceedingJoinPoint pjp) throws Throwable{
+		System.out.println("------------Before----------------");	//前置增强的逻辑
+		pjp.proceed();	//连接点的执行
+		System.out.println("------------After----------------");	//后置增强的逻辑。
+	}
+------------Before----------------
+Greet to Seanforfun
+------------After----------------
+```

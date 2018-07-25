@@ -233,4 +233,6 @@
   	<!-- 该bean会自动扫描@AspectJ注解, 同时也会自动织入所有通过xml配置的切面 -->
   	<!-- <bean class="org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator"/> -->
   	
+  	<bean id="naiveWaiter" class="ca.mcmaster.spring.aop.NaiveWaiter"/>
+  	<bean class="ca.mcmaster.spring.aop.wiring.TestAspect"/>
 </beans>

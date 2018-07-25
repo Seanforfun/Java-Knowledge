@@ -1,5 +1,7 @@
 package ca.mcmaster.spring.aop;
 
+import ca.mcmaster.spring.aop.annotation.NeedTest;
+
 /**
  * @author SeanForFun E-mail:xiaob6@mcmaster.ca
  * @date Jul 19, 2018 3:10:41 PM
@@ -12,6 +14,7 @@ public class NaiveWaiter implements Waiter {
 //		throw new RuntimeException(name +" said dirty words.");
 	}
 	@Override
+	@NeedTest
 	public void serve(String name) {
 		System.out.println("serve to " + name);
 	}
