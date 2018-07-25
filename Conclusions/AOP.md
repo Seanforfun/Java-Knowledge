@@ -426,7 +426,6 @@ public class GreetingComposablePointcut {
 	}
 }
 ```
-
 ```xml
 <!-- 设置复合切面 -->
 <bean id="composablePointcut" class="ca.mcmaster.spring.aop.wiring.GreetingComposablePointcut"/>
@@ -434,8 +433,74 @@ public class GreetingComposablePointcut {
 	<property name="pointcut" value="#{composablePointcut.intersectionPointcut}"/>
 	<property name="advice" ref="greetingBeforeAdvice"/>
 </bean>
+```
 
 ### 自动创建代理
 > 当我们要进行织入的时候，我们需要使用代理。上面的代码中，所生成的代理对象都是通过ProxyFactoryBean进行生成的，较为麻烦。我们可以通过使用自动代理的机制，让容器为我们自动生成代理对象。
 
-#### 
+#### BeanPostProcessor
+![BeanPostProcessor](https://i.imgur.com/It3wsSB.png)
+
+#### BeanNameAutoProxyCreator
+> 基于Bean配置名的自动代理创建器。(命名规则)
+
+```xml
+<!-- 使用bean名称进行自动代理 -->
+<bean class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator" >
+	<property name="beanNames">
+		<list>
+			<!-- 通过正则表达式进行bean对象的匹配 -->
+			<value>*Target</value>
+		</list>
+	</property>
+	<property name="interceptorNames" value="greetingBeforeAdvice"/>
+	<property name="optimize" value="true"/>
+</bean>
+```
+
+* 测试
+```Java
+public class AutomaticBeanFactoryTest {
+	@Autowired
+	@Qualifier("waiterTarget")
+	private Waiter waiter;
+	@Autowired
+	@Qualifier("sellerTarget")
+	private Seller seller;
+	@Test
+	public void test(){
+		waiter.greetTo("Seanforfun");
+		seller.greetTo("Sean");
+	}
+}
+Wow! Hello Seanforfun!
+Waiter Greet to Seanforfun
+Wow! Hello Sean!
+Seller greet to Sean
+```
+
+#### DefaultAdvisorAutoProxyCreator
+> 切面(advisor)的信息中包含了要增强的对象(pointcut)和增强的方法(advice),其中提供了足够的信息用于生成代理对象。所以当我们定义了DefaultAdvisorAutoProxyCreator对象后，可以为要增强的bean对象自动生成代理。
+
+```xml
+<!-- 通过切面生成代理 -->
+<!-- 切面本身包括了增强方法和要增强的对象，这两个对象已经包括了足够的信息，
+当匹配到了要被增强的对象时，会自动生成代理。 -->
+<bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"/>
+```
+
+* 所有作为bean对象生成的切面均被注册
+```Java
+对greetTo进行静态检查
+对greetTo进行静态检查
+对serveTo进行静态检查
+对toString进行静态检查
+对clone进行静态检查
+对greetTo进行静态检查
+Wow! Hello Seanforfun!
+Wow! Hello Seanforfun!
+对greetTo进行动态检查
+Waiter Greet to Seanforfun
+Wow! Hello Sean!
+Seller greet to Sean
+```

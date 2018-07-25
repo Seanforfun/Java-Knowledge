@@ -206,7 +206,7 @@
   	</bean> -->
   	
   	<!-- 使用bean名称进行自动代理 -->
-  	<bean class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator" >
+  	<!-- <bean class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator" >
   		<property name="beanNames">
   			<list>
   				<value>*Target</value>
@@ -214,5 +214,10 @@
   		</property>
   		<property name="interceptorNames" value="greetingBeforeAdvice"/>
   		<property name="optimize" value="true"/>
-  	</bean>
+  	</bean> -->
+  	
+  	<!-- 通过切面生成代理 -->
+  	<!-- 切面本身包括了增强方法和要增强的对象，这两个对象已经包括了足够的信息，
+  	当匹配到了要被增强的对象时，会自动生成代理。 -->
+  	<bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"/>
 </beans>
