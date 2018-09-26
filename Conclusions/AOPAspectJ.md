@@ -132,6 +132,7 @@ Greet to Sean
 
 #### 连接点的信息（JointPoint）
 > 我们之所以要使用jointpoint是因为我们想实现环绕式增强。
+> 想要实现环绕式增强需要自己实现public void jointPointAccess(ProceedingJoinPoint pjp) throws Throwable方法并在其中调用方法运行。并在方法运行前后分别实现增强。
 
 ```Java
 @Around("execution(* greetTo(..))")
@@ -144,3 +145,33 @@ Greet to Sean
 Greet to Seanforfun
 ------------After----------------
 ```
+
+#### 绑定连接点方法入参
+> 使用target方法传入参数
+> 重载public void bindJoinPointParams(...)并传入参数以便在增强中调用。
+
+![绑定连接点方法入参](https://i.imgur.com/zIsIeFs.png)
+```Java
+//
+@Before("target(ca.mcmaster.spring.aop.NaiveWaiter) && args(num, name)")//前置增强
+public void bindJoinPointParams(int num, String name){	//说明传入的参数是num，name, 是通过参数名进行匹配的。
+	System.out.println("Get name" + name);
+	System.out.println("Get num" + num);
+}
+```
+
+#### 绑定代理对象
+> 通过this实现绑定，会自动检测类型会生成代理。进行织入。
+
+![](https://i.imgur.com/J9Uf9BQ.png)
+```Java
+@Before("this(waiter)")
+public void bindProxyObj(Waiter waiter){
+	System.out.println("----------------------bindProxyObj()-------------------");
+	System.out.println(waiter.getClass().getName());
+}
+----------------------bindProxyObj()-------------------
+com.sun.proxy.$Proxy19	//实现接口的对象，所以会通过java proxy实现。
+```
+
+#### 绑定类注解对象
