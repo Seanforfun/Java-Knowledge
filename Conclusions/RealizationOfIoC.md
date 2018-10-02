@@ -1,5 +1,9 @@
-# IoC
+# IoC 反转控制
 > 面向对象的处理中，对象封装了数据和堆数据的处理，对象的依赖关系常常体现在对数据和方法的依赖上。所以我们可以将对象之间的依赖交给IoC容器去处理，减少了对象之间的耦合。
+
+### 核心
+1. 反转
+2. 控制
 
 ### What is Inversed?
 1. 在我们原来生成一个对象的实例时，是我们主动将对象的依赖进行注入，例如我们会生成新的实例并赋值给引用，这是正向的控制。
@@ -63,6 +67,12 @@ Parent classloader: sun.misc.Launcher$ExtClassLoader@15db9742
 Boot classloader: null //启动加载器是通过C++实现的，用于加载${JAVA_HOME}/lib中的类。
 ```
 
+* ClassLoader类分析
+1. java.lang.ClassLoader.loadClass(String) 通过类的全限定名，获取Class对象。
+2. java.lang.ClassLoader.defineClass(String, byte[], int, int) 通过类的字节码解析并转换成类对象。
+3. java.lang.ClassLoader.findSystemClass(String) 从本地的文件系统中获取Class文件并生成Class对象。
+4. java.lang.ClassLoader.getParent() 利用双亲委派机制，获取父类加载器。
+
 ### Resource对象
 > Resource对象是对资源文件的一种抽象，提供了多种对于文件信息获取的方法，可以用于Spring定位包含BeanDefinition的文件并获取资源。
 
@@ -99,6 +109,7 @@ public class ResourceTest {
 ### BeanFactory and Application Context
 * BeanFactory是Spring的框架设施，就是我们平时所说的IOC容器，是一种较为底层的容器，一般程序员并不会用到，却是Spring实现的核心。
 * ApplicationContext叫做应用上下文，面向Spring框架的开发者，有时我们也成为Spring容器。
+* 编程时一般都不会用到BeanFactory。
 
 #### BeanFactory
 > BeanFactory是类的通用工厂，可以创建并管理各种POJO类，这些类要遵从一定的规范，这样Beanfaactory才能调用反射机制生成类对象。
