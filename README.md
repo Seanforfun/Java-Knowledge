@@ -44,6 +44,7 @@ Save my conclusions different aspect of Java.
 * [IoC Container](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/IOCContainer.md)
 * [AOP in Spring](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/AOP.md)
 * [AOP AspectJ](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/AOPAspectJ.md)
+* [Spring Properties：格式转换器，i18n， Spring事件体系](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringProperties.md)
 
 ## JVM
 * [JVM Memory Manage](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JVMMemoryManage.md)
