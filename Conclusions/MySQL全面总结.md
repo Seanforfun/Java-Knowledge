@@ -1,6 +1,8 @@
 # MySql总结
 本文档是基于《MySQL必知必会》的总结，希望完成于2018年12月之前。本书包含了关于MySQL较为全面的基础语法，希望可以弥补我在开发过程中因为对于MySQL基础了解不扎实所造成的一些问题。并且在日后的开发中再遇到类似的问题可以通过阅读本文档进行回忆并加以利用。
 
+在总结的最开始部分，我并没有遵循一定的规范编写我的SQL指令，但是最好的规范是在编写指令时，对于SQL关键字，我们使用大写，对于字段等等元信息我们使用小写加以区分和阅读。
+
 ### 了解MySQL，
 1. 数据库：保存有组织的数据的容器（通常是一个文件或一组文件）。
   * DBMS(database manage system): 数据库管理软件，和数据库本身有一些区别，我们可以理解为我们使用DBMS访问数据库。
@@ -33,7 +35,7 @@
 
 2. 选择数据库:我们打开了DBMS，其连接到MySQL这个数据系统，里面可以存储多个数据库，此时我们需要选择我们需要连接的数据库。
 
-```MySql
+```SQL
 # 显示当前数据库系统中所有的数据库
 show databases;
 +--------------------+
@@ -100,4 +102,81 @@ show grants;
 # 显示errors和warnings
 show errors;
 show warnings;
+```
+
+### 数据检索
+1. 查找数据（Select）
+
+#### 检索某个列: select (列名) from (表名);
+  此处的数据是没有经过排序的，所以每一次结果不一定是顺序相同的。
+```SQL
+select name from test;
++------------+
+| name       |
++------------+
+| Seanforfun |
+| Irene      |
+| Jenny      |
++------------+
+3 rows in set
+```
+
+#### 检索多个列： SELECT （列名1， 列名2 ..） FROM （表名）；
+```SQL
+SELECT id, name from test;
++----+------------+
+| id | name       |
++----+------------+
+|  1 | Seanforfun |
+|  2 | Irene      |
+|  3 | Jenny      |
++----+------------+
+3 rows in set
+```
+
+#### 检索多个列: 使用通配符*，但是*这种检索似乎会造成速度上的损失。
+```SQL
+SELECT
+  *
+FROM
+  test;
++----+------------+
+| id | name       |
++----+------------+
+|  1 | Seanforfun |
+|  2 | Irene      |
+|  3 | Jenny      |
++----+------------+
+3 rows in set
+```
+
+### 检索不同的行： SELECT DISTINCT (列名1， 列名2) FROM (表名)。
+```SQL
+SELECT DISTINCT
+  name
+FROM
+  test;
++------------+
+| name       |
++------------+
+| Seanforfun |
+| Irene      |
+| Jenny      |
++------------+
+3 rows in set
+
+# 当我们使用DISTINCT时，如果我们跟着多个字段，对于任意一行，如果有一个值不相同，不被视为DISTINCT。
+SELECT DISTINCT
+  id, name
+FROM
+  test;
++----+------------+
+| id | name       |
++----+------------+
+|  1 | Seanforfun |
+|  2 | Irene      |
+|  3 | Jenny      |
+|  4 | Seanforfun |
++----+------------+
+4 rows in set
 ```
