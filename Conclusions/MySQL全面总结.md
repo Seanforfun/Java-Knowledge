@@ -150,7 +150,7 @@ FROM
 3 rows in set
 ```
 
-### 检索不同的行： SELECT DISTINCT (列名1， 列名2) FROM (表名)。
+#### 检索不同的行： SELECT DISTINCT (列名1， 列名2) FROM (表名)。
 ```SQL
 SELECT DISTINCT
   name
@@ -178,5 +178,52 @@ FROM
 |  3 | Jenny      |
 |  4 | Seanforfun |
 +----+------------+
+4 rows in set
+```
+
+#### 限制出现结果的数量 LIMIT (开始行), (行数);在实际使用中多用于分页对象。
+#### 实际上还有另外一中语法可以限制出现信息的数量， LIMIT 4 OFFSET 3; 这表示从行号3开始取，取出4条信息。
+```SQL
+SELECT
+  name
+FROM
+  test
+LIMIT
+  0, 1; # 此处说明出现的第一条数据的行号是0，并且总共只出现1条数据。
++------------+
+| name       |
++------------+
+| Seanforfun |
++------------+
+1 row in set
+
+SELECT name
+FROM test
+LIMIT 3 OFFSET 1;
++------------+
+| name       |
++------------+
+| Irene      |
+| Jenny      |
+| Seanforfun |
++------------+
+3 rows in set
+```
+
+#### 使用完全限定的表名
+1. 定位列： 表名.列名
+2. 定位表: 数据库名.表名
+
+```SQL
+SELECT test.id  # 说明当前列是位于test表中的。
+from test.test; # 当前表是位于数据库test中的test表。
++----+
+| id |
++----+
+|  1 |
+|  2 |
+|  3 |
+|  4 |
++----+
 4 rows in set
 ```
