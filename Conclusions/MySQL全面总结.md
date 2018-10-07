@@ -227,3 +227,88 @@ from test.test; # 当前表是位于数据库test中的test表。
 +----+
 4 rows in set
 ```
+
+### 数据检索排序
+本模块主要讲解ORDER BY语句的使用方式。
+
+如果不进行排序，数据一般会以它们在底层中的顺序进行显示，这可以是数据添加到表中的顺序。如果数据进行了删除，MySQL底层会对数据进行优化，则数据顺序有可能会发生变化，此时我们需要用ORDER BY字段确定数据的顺序。
+
+#### 使用ORDER BY排序
+```SQL
+SELECT name FROM test ORDER BY name;
++------------+
+| name       |
++------------+
+| Irene      |
+| Jenny      |
+| Seanforfun |
+| Seanforfun |
++------------+
+4 rows in set
+
+SELECT * FROM test ORDER BY id;
++----+------------+
+| id | name       |
++----+------------+
+|  1 | Seanforfun |
+|  2 | Irene      |
+|  3 | Jenny      |
+|  4 | Seanforfun |
++----+------------+
+4 rows in set
+```
+
+#### 按序排列多个列 ORDER BY (字段1)， (字段2)...
+1. 针对多个列进行排列，打个比方，我们首先按照姓进行排列，然后通过名字进行排列。
+2. 将优先排序的字段放在前面。
+
+```SQL
+SELECT *
+FROM test
+ORDER BY surname, name; # 首先会对surname进行排序，然后再对name进行排序。
+
++----+------------+---------+
+| id | name       | SURNAME |
++----+------------+---------+
+|  2 | Irene      | REN     |
+|  3 | Jenny      | XIAO    |
+|  1 | Seanforfun | XIAO    |
+|  4 | Seanforfun | XIAO    |
++----+------------+---------+
+4 rows in set
+```
+
+#### 指定方向进行排序 DESC ASC
+1. ASC: 升序，系统默认的排序方式是升序。
+2. DESC:降序。
+3. 配合ORDER BY字段使用，在要确定顺序的字段后面加入ASC或DESC，默认的字段是ASC。
+
+```SQL
+SELECT *
+FROM test
+ORDER BY surname DESC, name;
+
++----+------------+---------+
+| id | name       | SURNAME |
++----+------------+---------+
+|  3 | Jenny      | XIAO    |
+|  1 | Seanforfun | XIAO    |
+|  4 | Seanforfun | XIAO    |
+|  2 | Irene      | REN     |
++----+------------+---------+
+4 rows in set
+```
+
+#### ORDER BY和LIMIT的结合
+我们通过该种方法可以取出排序的前几位。
+
+```SQL
+SELECT * FROM test ORDER BY salary DESC LIMIT 0, 1;
+
++----+------------+---------+--------+
+| id | name       | SURNAME | salary |
++----+------------+---------+--------+
+|  1 | Seanforfun | XIAO    |  10000 |
++----+------------+---------+--------+
+1 row in set
+```
