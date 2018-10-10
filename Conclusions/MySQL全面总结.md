@@ -782,3 +782,141 @@ SELECT * FROM test WHERE DATE(currenttime) BETWEEN '2016-1-1' AND '2020-1-1';
 +----+-------+---------+--------+--------+---------------------+
 3 rows in set
 ```
+
+#### 数值处理函数
+| 函数 | 说明 | 使用方法 |
+| :------: | :------: | :------: |
+| ABS() | 返回绝对值 | SELECT ABS(数值) |
+| COS(), SIN(), TAN() | 返回三角函数 | SELECT COS(数值), SIN(数值), TAN(数值) |
+| EXP() | 返回指数值 | SELECT EXP(数值) |
+| MOD() | 返回余数 | SELECT MOD(除数， 被除数) |
+| RAND() | 返回一个0 - 1的随机数 | SELECT RAND() |
+
+### 聚集函数
+#### AVG(): 平均值
+
+```SQL
+# 返回平均工资
+SELECT AVG(SALARY) AS average_salary
+FROM test;
+
++--------------------+
+| average_salary     |
++--------------------+
+| 63333.333333333336 |
++--------------------+
+1 row in set
+```
+
+#### COUNT(): 返回数据的个数
+
+```SQL
+# 表中数据的个数。
+SELECT COUNT(id) AS data_number
+FROM test;
+
++-------------+
+| data_number |
++-------------+
+|           3 |
++-------------+
+1 row in set
+```
+
+#### MAX()， MIN():返回数据中的最大值/最小值
+
+```SQL
+# 返回salary的最大值。
+SELECT MAX(salary)
+FROM test;
+
++-------------+
+| MAX(salary) |
++-------------+
+|      100000 |
++-------------+
+1 row in set
+
+# 返回salary的最小值。
+SELECT MIN(salary)
+FROM test;
+
++-------------+
+| MIN(salary) |
++-------------+
+|       10000 |
++-------------+
+1 row in set
+```
+
+#### SUM(): 返回总和
+
+```SQL
+SELECT SUM(salary) FROM test;
+
++-------------+
+| SUM(salary) |
++-------------+
+|      190000 |
++-------------+
+1 row in set
+```
+
+### 分组数据 GROUP BY， 通过某个数值进行分组
+
+```SQL
+# 显示相同groupid的数据的个数。
+
+SELECT groupid, COUNT(*)
+FROM test
+GROUP BY groupid;
+
++---------+----------+
+| groupid | COUNT(*) |
++---------+----------+
+|       1 |        3 |
+|       2 |        1 |
++---------+----------+
+2 rows in set
+
+# 使用WITH ROLLUP进行汇总
+
+SELECT groupid, COUNT(*)
+FROM test
+GROUP BY groupid WITH ROLLUP;
+
++---------+----------+
+| groupid | COUNT(*) |
++---------+----------+
+|       1 |        3 |
+|       2 |        1 |
+| NULL    |        4 |
++---------+----------+
+3 rows in set
+```
+
+#### 过滤分组HAVING
+1. WHERE： 是用来过滤数据。
+2. HAVING: 用来过滤分组。
+
+```SQL
+SELECT groupid, COUNT(*)
+FROM test
+GROUP BY groupid
+HAVING COUNT(*) > 1;
+
++---------+----------+
+| groupid | COUNT(*) |
++---------+----------+
+|       1 |        3 |
++---------+----------+
+1 row in set
+
+SELECT *
+FROM test
+GROUP BY groupid
+having sum(salary > 10000);
+```
+
+#### SELECT子句顺序
+SELECT | FROM | WHERE | GROUP BY | HAVING | ORDER BY | LIMIT
