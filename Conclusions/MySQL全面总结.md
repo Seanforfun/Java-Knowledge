@@ -371,3 +371,414 @@ where
 +----+------------+---------+--------+
 1 row in set
 ```
+### 组合Where语句
+
+```
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  1 | Botao | XIAO    | 100000 |
+|  2 | Yijia | REN     |  10000 |
+|  3 | Jinyu | XIAO    |  80000 |
++----+-------+---------+--------+
+```
+
+#### AND操作符
+在使用条件语句的同时，一个条件变量一般是不够的，我们就需要使用AND操作符来连接多个条件变量，将会返回符合所有条件变量的数据。
+
+```SQL
+# 使用and连接了两个条件变量，surname和salary。
+SELECT *
+FROM test
+WHERE
+	surname = 'XIAO' AND salary > 90000;
+
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  1 | Botao | XIAO    | 100000 |
++----+-------+---------+--------+
+1 row in set
+```
+
+#### OR操作符
+通过OR操作符，只要满足了任意一个条件变量，我们就会返回该条信息。
+
+```SQL
+SELECT *
+FROM test
+WHERE
+	surname = 'REN' or salary > '90000';
+
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  1 | Botao | XIAO    | 100000 |
+|  2 | Yijia | REN     |  10000 |
++----+-------+---------+--------+
+2 rows in set
+```
+
+#### 计算次序
+在使用条件变量的过程中，连接操作符是有优先级设置的。
+
+* NOT > AND > OR
+* 在我们使用的过程中，我们需要用（）来限定优先级。括号内的限定优先。
+
+```SQL
+SELECT *
+FROM test
+WHERE
+	id = 2 OR id = 3 AND salary < 10000;
+
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  2 | Yijia | REN     |  10000 |
++----+-------+---------+--------+
+1 row in set
+
+SELECT *
+FROM test
+WHERE
+	(id = 2 OR id = 3) AND salary < 10000;
+
+Empty set
+```
+
+#### IN操作符
+通过IN来限定范围。和BETWEEN AND的使用不同。
+* BETWEEN AND：给了上限和下限，返回所有范围内的值。
+* IN： 给出多个值，如果in内的值存在，则返回该值。
+
+```SQL
+SELECT *
+FROM test
+WHERE
+	salary IN (90000, 10000);
+
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  2 | Yijia | REN     |  10000 |
++----+-------+---------+--------+
+1 row in set
+
+SELECT *
+FROM test
+WHERE
+	name in ('Botao', 'xxxx');
+
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  1 | Botao | XIAO    | 100000 |
++----+-------+---------+--------+
+1 row in set
+```
+
+为什么要使用IN操作符：
+1. 在使用长的合法选项清单时，IN操作符更加直观。
+2. 在使用IN时，计算的次序更容易管理。
+3. IN操作符比OR更快。
+4. IN操作符可以包含其他的WHERE语句，可以更动态的建立WHERE子句。
+
+#### NOT操作符
+NOT操作符可以为之后的条件变量取反。
+NOT操作符在MySQL中只能针对IN, BETWEEN进行取反，在别的BDMS中，大多可以对所有的操作符进行操作。
+
+```SQL
+SELECT *
+FROM test
+WHERE
+	id NOT IN (1,3);
+
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  2 | Yijia | REN     |  10000 |
++----+-------+---------+--------+
+1 row in set
+```
+
+### 通配符过滤 LIKE
+在进行数据过滤的过程中，不一定能够提供所有的数据进行筛选，所以我们要使用模糊查询。
+在模糊查询的过程中，我们使用关键词LIKE，并且使用通配符进行模糊匹配。
+
+#### 通配符
+1. %通配符： %通配符能匹配出任何字符出现任意次数。
+
+```SQL
+# 匹配出所有姓中包含X的信息。
+SELECT *
+FROM test
+WHERE
+	surname like '%X%';
+
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  1 | Botao | XIAO    | 100000 |
+|  3 | Jinyu | XIAO    |  80000 |
++----+-------+---------+--------+
+2 rows in set
+```
+
+2. _通配符： _通配符能匹配出任意字符出现单一次数。
+
+```SQL
+# _替代了o，_位置可以填充所有单个字符。
+SELECT *
+FROM test
+WHERE
+	name LIKE 'B_tao';
+
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  1 | Botao | XIAO    | 100000 |
++----+-------+---------+--------+
+1 row in set
+```
+
+3. 通配符的使用技巧。在通配符的使用过程中，这种匹配的方法是好事较长，我们需要一些使用技巧。
+* 不要过度使用通配符，如果别的操作可以替代，尽量使用别的操作。
+* 如果无法避免使用通配符，不要将通配符放在搜索模式的开始处，不然速度是最慢的。
+* 仔细注意通配符的位置，错误的通配符可能会造成错误的结果。
+
+### 正则表达式匹配REGEXP
+1. 基本字符匹配（.）：.表示匹配任意一个字符。
+
+```SQL
+SELECT *
+FROM test
+WHERE
+	name REGEXP '.i';
+
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  2 | Yijia | REN     |  10000 |
+|  3 | Jinyu | XIAO    |  80000 |
++----+-------+---------+--------+
+2 rows in set
+```
+
+2. |操作符： 通过|搜索多个串之一，为其中的任意一个。
+
+```SQL
+# name中出现i或者o。
+SELECT *
+FROM test
+WHERE
+	name REGEXP 'i|o';
+
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  1 | Botao | XIAO    | 100000 |
+|  2 | Yijia | REN     |  10000 |
+|  3 | Jinyu | XIAO    |  80000 |
++----+-------+---------+--------+
+3 rows in set
+```
+
+3. 匹配多个字符之一[]
+
+```SQL
+# 匹配出首字符是ABX中的按任意一个。
+SELECT *
+FROM test
+WHERE
+	name REGEXP '[ABX]otao';
+
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  1 | Botao | XIAO    | 100000 |
++----+-------+---------+--------+
+1 row in set
+```
+
+4. 范围匹配符
+
+```SQL
+#匹配首字母在A-Z的范围内。
+SELECT *
+FROM test
+WHERE
+	name REGEXP '[A-Z]otao';
+
++----+-------+---------+--------+
+| id | name  | surname | salary |
++----+-------+---------+--------+
+|  1 | Botao | XIAO    | 100000 |
++----+-------+---------+--------+
+1 row in set
+
+#匹配首字母不在A-Z范围内。
+SELECT *
+FROM test
+WHERE
+	name REGEXP '[^A-Z]otao';
+
+Empty set
+```
+
+### 计算字段
+
+#### 什么是计算字段
+1. 数据库中所存储的字段不一定是我们所需要的，有的时候我们在前端时候通过表达式（例如EL）进行拼接，实际上我们还可以在数据库端生成我们需要的字段，这就是计算字段。
+2. 计算字段不是实际存在在数据库中的，我们在使用select的过程中利用类似拼接的操作构造出来的。
+3. 可能使用数据端的计算字段会比页面端要快一些。
+
+#### CONCAT() 多数SQL的DBMS使用+或是||,MySQL略有不同。CONCAT(字段1， 字段2...)
+
+```SQL
+# 使用CONCAT拼接姓名
+SELECT
+	CONCAT(name, ' ', surname)
+FROM test
+ORDER BY surname DESC;
+
++----------------------------+
+| CONCAT(name, ' ', surname) |
++----------------------------+
+| Botao XIAO                 |
+| Jinyu XIAO                 |
+| Yijia REN                  |
++----------------------------+
+3 rows in set
+```
+
+#### TRIM, LTRIM, RTRIM去除字符串左右的空格。
+1. TRIM(字段): 去除字段前后的空格。
+2. LTRIM（字段）: 去除字段左侧的空格。
+3. RTRIM(字段)： 去除字段右侧的空格。
+
+```SQL
+# 显示原本左右有空格的字段
+SELECT CONCAT(name, ' ', surname) AS fullname
+FROM test
+ORDER BY surname DESC;
+
++---------------------------------+
+| fullname                        |
++---------------------------------+
+|               Botao        XIAO |
+| Jinyu XIAO                      |
+| Yijia REN                       |
++---------------------------------+
+3 rows in set
+
+# 去除左侧的空格
+SELECT CONCAT(LTRIM(name), ' ', surname) AS fullname
+FROM test
+ORDER BY surname DESC;
+
++-------------------+
+| fullname          |
++-------------------+
+| Botao        XIAO |
+| Jinyu XIAO        |
+| Yijia REN         |
++-------------------+
+3 rows in set
+
+# 去除右侧的空格
+SELECT CONCAT(RTRIM(name), ' ', surname) AS fullname
+FROM test
+ORDER BY surname DESC;
+
++--------------------------+
+| fullname                 |
++--------------------------+
+|               Botao XIAO |
+| Jinyu XIAO               |
+| Yijia REN                |
++--------------------------+
+3 rows in set
+
+# 通过TRIM去除左右的空格
+SELECT CONCAT(TRIM(name), ' ', surname) AS fullname
+FROM test
+ORDER BY surname DESC;
+
++------------+
+| fullname   |
++------------+
+| Botao XIAO |
+| Jinyu XIAO |
+| Yijia REN  |
++------------+
+3 rows in set
+```
+
+#### 执行算数计算
+1. +: 加
+2. -：减
+3. *: 乘
+4. /：除
+
+```SQL
+# 将salary * number
+
+SELECT CONCAT(TRIM(name), ' ', surname) AS fullname, salary * number AS total
+FROM test
+ORDER BY total DESC;
+
++------------+---------+
+| fullname   | total   |
++------------+---------+
+| Botao XIAO | 1200000 |
+| Jinyu XIAO |  960000 |
+| Yijia REN  |  120000 |
++------------+---------+
+3 rows in set
+
+# 显示当前时间
+SELECT NOW() AS time;
+
++---------------------+
+| time                |
++---------------------+
+| 2018-10-10 13:49:10 |
++---------------------+
+1 row in set
+```
+
+### 函数
+#### 文本处理函数
+| 函数 | 说明 | 使用方法 |
+| :------: | :------: | :------: |
+| LEFT() | 截取字符串左侧的n位子串 | SELECT LEFT(字符串, 截取的位数) |
+| LENGTH() | 返回字符串的长度 | SELECT LENGTH(字符串) |
+| LOCATE() | 找出字符串的子串位置 | SELECT LOCATE(子串， 字符串) 注意：此处的index是从1开始的 |
+| LOWER()， UPPER() | 将字符串转换成小/大写 | SELECT LOWER(字符串)，UPPER(字符串) |
+| LTRIM(), RTRIM() | 去除左右两侧的空格 | LTRIM(字符串), RTRIM(字符串) |
+| SUBSTRING() | 返回字符串的子串 | SUBSTRING(字符串， 起始位置， 长度) |
+
+#### 时间处理函数
+| 函数 | 说明 | 使用方法 |
+| :------: | :------: | :------: |
+| ADDDATE() | 增加一个日期（天，周） | [ADDDATE使用方法](http://www.w3school.com.cn/sql/func_date_add.asp) Example： SELECT name, ADDDATE(currenttime, interval 2 day) FROM test;|
+| ADDTIME() | 增加一个时间（小时， 分，秒） | Example： select name, ADDDATE(currenttime, interval 2 HOUR) from test;|
+| CURDATE() | 返回当前日期 | SELECT CURDATE();|
+| CURTIME() | 返回当前时间 | SELECT CURTIME();|
+| DATE_FORMAT() | 返回某种格式的时间 | [DATE_FORMAT()使用方法](http://www.w3school.com.cn/sql/func_date_format.asp)|
+| HOUR(), MINUTE()， SECOND() | 返回当前时间的小时,分钟和秒 | SELECT HOUR(时间)， MINUTE(时间)， SECOND(时间);|
+| DATE(), TIME() | 返回当前时间中的日期部分和时间部分 | SELECT DATE(时间), TIME(时间);|
+
+* 返回某个时间段内的数据。
+```SQL
+SELECT * FROM test WHERE DATE(currenttime) BETWEEN '2016-1-1' AND '2020-1-1';
+
++----+-------+---------+--------+--------+---------------------+
+| id | name  | surname | salary | number | currenttime         |
++----+-------+---------+--------+--------+---------------------+
+|  1 | Botao | XIAO    | 100000 |     12 | 2018-10-10 14:26:49 |
+|  2 | Yijia | REN     |  10000 |     12 | 2018-10-10 14:26:49 |
+|  3 | Jinyu | XIAO    |  80000 |     12 | 2018-10-10 14:26:49 |
++----+-------+---------+--------+--------+---------------------+
+3 rows in set
+```
