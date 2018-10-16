@@ -50,7 +50,8 @@ Save my conclusions different aspect of Java.
 * [Spring Properties：格式转换器，i18n， Spring事件体系](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringProperties.md)
 
 #### Spring Cloud
-*  [Spring Cloud Service Register](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudRegister.md)
+* [Spring Cloud Service Register](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudRegister.md)
+* [Spring Cloud Ribbon](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudRibbon.md)
 
 ## JVM
 * [JVM Memory Manage](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JVMMemoryManage.md)

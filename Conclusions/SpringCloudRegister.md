@@ -1,4 +1,4 @@
-# Spring Cloud注册
+# Spring Cloud注册与发现
 
 ### 创建Server和Client
 创建两个SpringBoot项目，一个作为Server，一个作为Client。选用Eureka作为服务器。
