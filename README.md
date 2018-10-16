@@ -52,6 +52,7 @@ Save my conclusions different aspect of Java.
 #### Spring Cloud
 * [Spring Cloud Service Register](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudRegister.md)
 * [Spring Cloud Ribbon](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudRibbon.md)
+* [Spring Cloud Feign](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudFeign.md)
 
 ## JVM
 * [JVM Memory Manage](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JVMMemoryManage.md)
