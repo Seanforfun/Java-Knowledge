@@ -49,11 +49,14 @@ Save my conclusions different aspect of Java.
 * [AOP AspectJ](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/AOPAspectJ.md)
 * [Spring Properties：格式转换器，i18n， Spring事件体系](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringProperties.md)
 
-#### Spring Cloud
+#### Spring Cloud reference: [SpringCloudLearning](https://github.com/forezp/SpringCloudLearning)
+通过Spring Cloud和SpringBoot实现微服务构架，严格参考[SpringCloudLearning](https://github.com/forezp/SpringCloudLearning)，更详细的资料可以根据所提供的reference进行学习，本地记录了学习该项目的过程，也可供参考。
+![微服务构架](https://i.imgur.com/COoCyXU.png)
 * [Spring Cloud Service Register 服务的注册和发现](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudRegister.md)
 * [Spring Cloud Ribbon, RestTemplate 通过Ribbon和RestTemplate实现负载均衡](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudRibbon.md)
 * [Spring Cloud Feign 通过Feign实现负载均衡](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudFeign.md)
 * [Spring Cloud Hystrix 通过Hystrix实现断路器](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudHystrix.md)
+* [Spring Cloud Zuul 通过Zuul实现网关和权限校验](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudZuul.md)
 
 ## JVM
 * [JVM Memory Manage](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JVMMemoryManage.md)
