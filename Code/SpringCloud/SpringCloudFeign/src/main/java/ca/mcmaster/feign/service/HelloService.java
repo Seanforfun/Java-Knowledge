@@ -2,6 +2,7 @@ package ca.mcmaster.feign.service;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
@@ -10,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam;
  * @version 1.0
  */
 //定义一个feign接口，通过@ FeignClient（“服务名”），来指定调用哪个服务。
-@FeignClient("SERVICE-HI")	
+@FeignClient(value="SERVICE-HI", fallback=HelloServiceHystrix.class)	
 public interface HelloService {
-	@RequestMapping("/hi")
+	@RequestMapping(value="/hi")
 	public String sayHello(@RequestParam("name") String name);
 }

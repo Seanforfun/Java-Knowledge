@@ -50,9 +50,10 @@ Save my conclusions different aspect of Java.
 * [Spring Properties：格式转换器，i18n， Spring事件体系](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringProperties.md)
 
 #### Spring Cloud
-* [Spring Cloud Service Register](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudRegister.md)
-* [Spring Cloud Ribbon](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudRibbon.md)
-* [Spring Cloud Feign](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudFeign.md)
+* [Spring Cloud Service Register 服务的注册和发现](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudRegister.md)
+* [Spring Cloud Ribbon, RestTemplate 通过Ribbon和RestTemplate实现负载均衡](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudRibbon.md)
+* [Spring Cloud Feign 通过Feign实现负载均衡](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudFeign.md)
+* [Spring Cloud Hystrix 通过Hystrix实现断路器](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudHystrix.md)
 
 ## JVM
 * [JVM Memory Manage](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JVMMemoryManage.md)
