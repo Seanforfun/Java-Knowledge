@@ -57,6 +57,7 @@ Save my conclusions different aspect of Java.
 * [Spring Cloud Feign 通过Feign实现负载均衡](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudFeign.md)
 * [Spring Cloud Hystrix 通过Hystrix实现断路器](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudHystrix.md)
 * [Spring Cloud Zuul 通过Zuul实现网关和权限校验](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudZuul.md)
+* [Spring Cloud Config 通过config-server和config-client实现远程配置](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringCloudConfig.md)
 
 ## JVM
 * [JVM Memory Manage](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JVMMemoryManage.md)
