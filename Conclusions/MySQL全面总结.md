@@ -965,3 +965,127 @@ WHERE
 1. 执行SELECT id FROM gender WHERE gender = 'MALE'； 将所有的id找到。
 2. 将步骤1的结果带入原语句，并进行外层查询。
 ```
+
+### 联结表
+#### 联结表的意义
+1. 联结表是一种关系表的体现，可以通过实现关系表来减少数据库的存储量。
+2. 多种产品可能对应同一个厂家，我们没有必要对所有的产品均存储一份厂家信息。我们就可以通过联结表来获得对应的所有信息。
+
+#### 外键（foreign key）
+外键是一张表中的某一列，它包含了另一个表的主键值，定义了两个表之间的关系。
+
+优势
+* 信息不会发生重复，不浪费时间和空间。
+* 如果某个外键发生了改变，我们不需要到每一条对应的数据进行修改，只需要统一修改信息。
+* 数据并不重复，所以对于数据的处理更加简单。
+
+```Xml
+1. test表
++----+-------+---------+--------+--------+---------------------+---------+---------+
+| id | name  | surname | salary | number | currenttime         | groupid | company |
++----+-------+---------+--------+--------+---------------------+---------+---------+
+|  1 | Botao | XIAO    | 100000 |     12 | 2018-10-19 16:37:32 |       1 |       2 |
+|  2 | Yijia | REN     |  10000 |     12 | 2018-10-19 16:38:01 |       1 |       1 |
+|  3 | Jinyu | XIAO    |  80000 |     12 | 2018-10-19 16:38:03 |       1 |       1 |
+|  4 | test  | test    | 121212 |     12 | 2018-10-19 16:38:05 |       2 |       2 |
++----+-------+---------+--------+--------+---------------------+---------+---------+
+
+2. company表
++----+----------+
+| id | name     |
++----+----------+
+|  1 | CIC      |
+|  2 | MCMASTER |
++----+----------+
+```
+
+#### 等值联结：联结两张表：通过同时访问两张表联结两张表
+```Xml
+SELECT test.id, CONCAT(test.name, " ", test.surname) as name, company.name as company from test, company;
++----+------------+----------+
+| id | name       | company  |
++----+------------+----------+
+|  1 | Botao XIAO | CIC      |
+|  1 | Botao XIAO | MCMASTER |
+|  2 | Yijia REN  | CIC      |
+|  2 | Yijia REN  | MCMASTER |
+|  3 | Jinyu XIAO | CIC      |
+|  3 | Jinyu XIAO | MCMASTER |
+|  4 | test test  | CIC      |
+|  4 | test test  | MCMASTER |
++----+------------+----------+
+```
+此时发现总数量为表1* 表2, 此处出现了笛卡尔积。因为两张表不知道在何处进行联结。
+
+#### 通过where限定联结的位置
+```Xml
+SELECT
+	test.id, CONCAT(test.name, " ", surname) as name, company.name as company
+FROM
+	test, company
+WHERE test.company = company.id;
++----+------------+----------+
+| id | name       | company  |
++----+------------+----------+
+|  1 | Botao XIAO | MCMASTER |
+|  2 | Yijia REN  | CIC      |
+|  3 | Jinyu XIAO | CIC      |
+|  4 | test test  | MCMASTER |
++----+------------+----------+
+```
+
+#### 联结多个表
+SQL对一条SELECT语句中可以联结的数量没有限制，创建的联结也基本相同。
+
+### 创建高级联结
+#### 创建表别名 AS
+```Xml
+SELECT
+	t.id, CONCAT(t.name, " ", t.surname) AS fullname, c.name AS company
+FROM
+	test AS t, company AS c
+WHERE
+	t.company = c.id;
++----+------------+----------+
+| id | fullname   | name     |
++----+------------+----------+
+|  1 | Botao XIAO | MCMASTER |
+|  2 | Yijia REN  | CIC      |
+|  3 | Jinyu XIAO | CIC      |
+|  4 | test test  | MCMASTER |
++----+------------+----------+
+```
+此时我们为test设置了别名t，company设置了别名c。
+
+#### 自联结
+1. 通过子语句查询所有和Botao同一个company的数据。
+```Xml
+SELECT
+	id, CONCAT(name, " ", surname) AS fullname
+FROM test WHERE
+company = (SELECT company
+	FROM test
+	WHERE name = 'BOTAO');
++----+------------+
+| id | fullname   |
++----+------------+
+|  1 | Botao XIAO |
+|  4 | test test  |
++----+------------+
+```
+
+2. 使用联结的查询
+```Xml
+SELECT t1.id, CONCAT(t1.name, " ", t1.surname) as fullname
+FROM test t1, test t2
+where
+	t1.company = t2.company AND t2.name = 'BOTAO';
+
++----+------------+
+| id | fullname   |
++----+------------+
+|  1 | Botao XIAO |
+|  4 | test test  |
++----+------------+
+```
+我们多次使用同一张表，可以避免子语句而通过等值联结进行筛选。该方法比子语句快得多。
