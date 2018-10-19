@@ -1000,7 +1000,7 @@ WHERE
 ```
 
 #### 等值联结：联结两张表：通过同时访问两张表联结两张表
-```Xml
+```sql
 SELECT test.id, CONCAT(test.name, " ", test.surname) as name, company.name as company from test, company;
 +----+------------+----------+
 | id | name       | company  |
@@ -1018,7 +1018,7 @@ SELECT test.id, CONCAT(test.name, " ", test.surname) as name, company.name as co
 此时发现总数量为表1* 表2, 此处出现了笛卡尔积。因为两张表不知道在何处进行联结。
 
 #### 通过where限定联结的位置
-```Xml
+```SQL
 SELECT
 	test.id, CONCAT(test.name, " ", surname) as name, company.name as company
 FROM
@@ -1039,7 +1039,7 @@ SQL对一条SELECT语句中可以联结的数量没有限制，创建的联结�
 
 ### 创建高级联结
 #### 创建表别名 AS
-```Xml
+```sql
 SELECT
 	t.id, CONCAT(t.name, " ", t.surname) AS fullname, c.name AS company
 FROM
@@ -1059,7 +1059,7 @@ WHERE
 
 #### 自联结
 1. 通过子语句查询所有和Botao同一个company的数据。
-```Xml
+```SQL
 SELECT
 	id, CONCAT(name, " ", surname) AS fullname
 FROM test WHERE
@@ -1075,7 +1075,7 @@ company = (SELECT company
 ```
 
 2. 使用联结的查询
-```Xml
+```sql
 SELECT t1.id, CONCAT(t1.name, " ", t1.surname) as fullname
 FROM test t1, test t2
 where
@@ -1089,3 +1089,57 @@ where
 +----+------------+
 ```
 我们多次使用同一张表，可以避免子语句而通过等值联结进行筛选。该方法比子语句快得多。
+
+### 外联结
+1. 许多联结讲一个表中的行与另一个表中的行进行关联，但有时候会需要包含没有关联行的那些行。
+
+```SQL
+此时，我们可以发现id为4的对应的company为NULL。
++----+-------+---------+--------+--------+---------------------+---------+---------+
+| id | name  | surname | salary | number | currenttime         | groupid | company |
++----+-------+---------+--------+--------+---------------------+---------+---------+
+|  1 | Botao | XIAO    | 100000 |     12 | 2018-10-19 16:37:32 |       1 |       2 |
+|  2 | Yijia | REN     |  10000 |     12 | 2018-10-19 16:38:01 |       1 |       1 |
+|  3 | Jinyu | XIAO    |  80000 |     12 | 2018-10-19 16:38:03 |       1 |       1 |
+|  4 | test  | test    | 121212 |     12 | 2018-10-19 17:51:52 |       2 | NULL    |
++----+-------+---------+--------+--------+---------------------+---------+---------+
+```
+
+2. 使用内联结的结果无法显示id为4的信息,因为该条信息对应的company是NULL，所以必然无法匹配WHERE或是内联结。
+```SQL
+# 内联结
+SELECT t.id, CONCAT(t.name, " ", t.surname) AS fullname, company.name
+FROM test t INNER JOIN company
+ON t.company = company.id;
+# 子语句
+SELECT t.id, CONCAT(t.name, " ", t.surname) AS fullname
+FROM test t
+WHERE t.company IN (select id FROM company);
+# 等值联结
+SELECT t.id, CONCAT(t.name, " ", t.surname) AS fullname, c.name
+FROM test t, company c
+WHERE t.company = c.id;
++----+------------+----------+
+| id | fullname   | name     |
++----+------------+----------+
+|  1 | Botao XIAO | MCMASTER |
+|  2 | Yijia REN  | CIC      |
+|  3 | Jinyu XIAO | CIC      |
++----+------------+----------+
+```
+
+3. 使用外联结从test表向为基点，显示所有的左侧的信息。
+```Sql
+SELECT t.id AS id, CONCAT(t.name, " ", t.surname) AS fullname, company.name
+FROM test t
+LEFT OUTER JOIN company
+ON t.company = company.id;
++----+------------+----------+
+| id | fullname   | name     |
++----+------------+----------+
+|  1 | Botao XIAO | MCMASTER |
+|  2 | Yijia REN  | CIC      |
+|  3 | Jinyu XIAO | CIC      |
+|  4 | test test  | NULL     |
++----+------------+----------+
+```
