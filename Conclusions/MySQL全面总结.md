@@ -772,7 +772,6 @@ SELECT NOW() AS time;
 * 返回某个时间段内的数据。
 ```SQL
 SELECT * FROM test WHERE DATE(currenttime) BETWEEN '2016-1-1' AND '2020-1-1';
-
 +----+-------+---------+--------+--------+---------------------+
 | id | name  | surname | salary | number | currenttime         |
 +----+-------+---------+--------+--------+---------------------+
@@ -1080,7 +1079,6 @@ SELECT t1.id, CONCAT(t1.name, " ", t1.surname) as fullname
 FROM test t1, test t2
 where
 	t1.company = t2.company AND t2.name = 'BOTAO';
-
 +----+------------+
 | id | fullname   |
 +----+------------+
@@ -1094,7 +1092,7 @@ where
 1. 许多联结讲一个表中的行与另一个表中的行进行关联，但有时候会需要包含没有关联行的那些行。
 
 ```SQL
-此时，我们可以发现id为4的对应的company为NULL。
+# 此时，我们可以发现id为4的对应的company为NULL。
 +----+-------+---------+--------+--------+---------------------+---------+---------+
 | id | name  | surname | salary | number | currenttime         | groupid | company |
 +----+-------+---------+--------+--------+---------------------+---------+---------+
@@ -1260,4 +1258,106 @@ SELECT id, name FROM company;
 |  5 | AAA      |
 |  6 | BBB      |
 +----+----------+
+```
+
+### 更新、删除数据
+#### 更新数据UPDATE
+1. 要更新的表的名字。
+2. 列名和它们的新值。
+3. 确定要更新的过滤条件。
+
+```SQL
+# 更新id为4的name和surname
+UPDATE test
+SET name='test111', surname='test222'
+WHERE id = 4;
++----+---------+---------+--------+--------+---------------------+---------+---------+
+| id | name    | surname | salary | number | currenttime         | groupid | company |
++----+---------+---------+--------+--------+---------------------+---------+---------+
+|  1 | Botao   | XIAO    | 100000 |     12 | 2018-10-19 16:37:32 |       1 |       2 |
+|  2 | Yijia   | REN     |  10000 |     12 | 2018-10-19 16:38:01 |       1 |       1 |
+|  3 | Jinyu   | XIAO    |  80000 |     12 | 2018-10-19 16:38:03 |       1 |       1 |
+|  4 | test111 | test222 | 121212 |     12 | 2018-10-22 17:44:26 |       2 | NULL    |
++----+---------+---------+--------+--------+---------------------+---------+---------+
+```
+
+#### 同时更新多条语句UPDATE
+```SQL
+# 使用了ignore字段，即使有的语句中发生了错误，我们也能更新别的语句。
+update ignore test set name='1212', surname='1212',happy='2222' where id=4; update ignore test set name='1212', surname='1212'；
+```
+
+#### 删除DELETE，将会删除表中的信息，不删除表本身。
+1. 选定删除的表。
+2. 选定要删除行的过滤条件。如果不指定，将会删除当前表中的所有信息。
+3. 如果要删除表，使用TRUNCATE TABLE。
+```sql
+# 删除id=5的信息。
+DELETE FROM test
+WHERE id = 5;
+```
+
+#### 更新和删除的指导原则
+1. 每次使用UPDATE和DELETE的过程中都要使用WHERE。
+2. 保证每个表都有主键。尽可能使用主键，多个值和值的范围。
+3. 在使用UPDATE和DELETE之前，使用SELECT进行测试，保证它过滤的是正确的记录。
+
+### 创建和操作表
+#### 创建表
+1. 使用NULL值，在创建表中使用NULL，表明当前列可以为NULL；NOT NULL说明当前字段必须有值，不可以为NULL；
+2. 主键， PRIMARY KEY(列名1， 列名2)。
+3. 使用AUTO_INCREMENT使得某些列自增。通过SELECT LAST_INSERT_ID（）获取最后一次自增的数值。
+4. 使用默认值DEFAULT。
+5. 设置引擎： ENGINE=InnoDB
+![Engine](https://i.imgur.com/pkUZ2BU.png)
+
+#### 更新表
+1. 增加表中的字段 ALTER TABLE 表名 ADD 列名 类型 选项
+```SQL
+# 增加一个varchar字段名为region，默认值为CANADA
+ALTER TABLE test
+ADD region varchar(100) NOT NULL DEFAULT 'Canada';
++----+---------+---------+--------+--------+---------------------+---------+---------+--------+
+| id | name    | surname | salary | number | currenttime         | groupid | company | region |
++----+---------+---------+--------+--------+---------------------+---------+---------+--------+
+|  1 | Botao   | XIAO    | 100000 |     12 | 2018-10-19 16:37:32 |       1 |       2 | Canada |
+|  2 | Yijia   | REN     |  10000 |     12 | 2018-10-19 16:38:01 |       1 |       1 | Canada |
+|  3 | Jinyu   | XIAO    |  80000 |     12 | 2018-10-19 16:38:03 |       1 |       1 | Canada |
+|  4 | test111 | test222 | 121212 |     12 | 2018-10-22 17:44:26 |       2 | NULL    | Canada |
++----+---------+---------+--------+--------+---------------------+---------+---------+--------+
+```
+
+2. 删除表中的列 ALTER TABLE 表名 DROP COLUMN 列名
+```SQL
+# 删除名为region的列并删除这些列中的信息。
+ALTER TABLE test DROP COLUMN region;
++----+---------+---------+--------+--------+---------------------+---------+---------+
+| id | name    | surname | salary | number | currenttime         | groupid | company |
++----+---------+---------+--------+--------+---------------------+---------+---------+
+|  1 | Botao   | XIAO    | 100000 |     12 | 2018-10-19 16:37:32 |       1 |       2 |
+|  2 | Yijia   | REN     |  10000 |     12 | 2018-10-19 16:38:01 |       1 |       1 |
+|  3 | Jinyu   | XIAO    |  80000 |     12 | 2018-10-19 16:38:03 |       1 |       1 |
+|  4 | test111 | test222 | 121212 |     12 | 2018-10-22 17:44:26 |       2 | NULL    |
++----+---------+---------+--------+--------+---------------------+---------+---------+
+```
+
+3. 修改表增加外键 ALTER TABLE 表名 ADD CONSTRAINT 约束名 FOREIGN KEY(外键字段) REFERENCES 外键表(外键表中字段);需要非常注意的使用ALTER TABLE，在改动前应该做一个完整的备份。
+
+```SQL
+# 添加一条约束tt，
+ALTER TABLE test ADD CONSTRAINT tt
+FOREIGN KEY(company) references company(id);
+```
+
+4. 删除表 DROP TABLE 表名
+```SQL
+# 删除某个表
+DROP TABLE company_new;
+Query OK, 0 rows affected
+```
+
+5. 重命名表 RENAME TABLE 表名 TO 新表名；
+```SQL
+# 将test表重命名为info
+RENAME TABLE test TO info；
 ```
