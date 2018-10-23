@@ -1543,3 +1543,110 @@ BEGIN
 	CLOSE cur;
 END;
 ```
+
+### 触发器TRIGGER
+所有的MySQL语句和存储过程都需要被调用才能执行，但是我们可以通过触发器来让一些语句可以直接被调用。
+1. 唯一的触发器名。
+2. 触发器关联的表。
+3. 触发器影响的活动（DELETE, UPDATE, INSERT）
+4. 触发器执行的时机（BEFORE, AFTER）, BEFORE一般是用于净化数据。
+```SQL
+# 创建一个触发器，向log表中插入当前的时间。
+CREATE PROCEDURE insertlog(
+IN text VARCHAR(200)
+)
+BEGIN
+    CREATE TABLE IF NOT EXISTS log(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, log varchar(200));
+    INSERT INTO log (log) VALUES (text);
+END;
+# 创建一个触发器，在info表被修改后调用insertlog存储过程
+CREATE TRIGGER infoupdate
+AFTER UPDATE ON info
+FOR EACH ROW
+CALL insertlog(now());
+# 使用DELETE触发器，可以调用一张OLD表，这张表是只读的，并不能修改。
+# 我们可以利用delete触发器备份数据。
+CREATE TRIGGER deleteinfo
+AFTER DELETE ON info
+FOR EACH ROW
+BEGIN
+    INSERT INTO log (log) VALUES (old.salary);
+END;
++----+---------------------+
+| id | log                 |
++----+---------------------+
+|  1 | 2018-10-23 14:18:28 |
+|  2 | 121212              |
++----+---------------------+
+```
+
+### 事务管理
+1. 事务：一组SQL语句
+2. 回退：撤销SQL语句的过程
+3. 提交：将未储存的SQL语句结果写入数据表
+4. 保留点：对保留点进行回退
+
+#### 控制事务管理
+1. 开启事务
+```SQL
+START TRANSACTION;
+```
+2. 使用回退
+```SQL
+SELECT * FROM info;
+# 开启事务
+START TRANSACTION;
+DELETE FROM info;
+SELECT * FROM info;
+# 事务回滚
+ROLLBACK;
+SELECT * FROM info;
++----+-------+---------+-----------+--------+---------------------+---------+---------+
+| id | name  | surname | salary    | number | currenttime         | groupid | company |
++----+-------+---------+-----------+--------+---------------------+---------+---------+
+|  1 | Botao | XIAO    | 123456567 |     12 | 2018-10-23 14:13:30 |       1 |       2 |
+|  2 | Yijia | REN     |     10000 |     12 | 2018-10-19 16:38:01 |       1 |       1 |
+|  3 | Jinyu | XIAO    |     80000 |     12 | 2018-10-19 16:38:03 |       1 |       1 |
++----+-------+---------+-----------+--------+---------------------+---------+---------+
+3 rows in set
+Query OK, 0 rows affected
+Query OK, 3 rows affected
+Empty set
+Query OK, 0 rows affected
++----+-------+---------+-----------+--------+---------------------+---------+---------+
+| id | name  | surname | salary    | number | currenttime         | groupid | company |
++----+-------+---------+-----------+--------+---------------------+---------+---------+
+|  1 | Botao | XIAO    | 123456567 |     12 | 2018-10-23 14:13:30 |       1 |       2 |
+|  2 | Yijia | REN     |     10000 |     12 | 2018-10-19 16:38:01 |       1 |       1 |
+|  3 | Jinyu | XIAO    |     80000 |     12 | 2018-10-19 16:38:03 |       1 |       1 |
++----+-------+---------+-----------+--------+---------------------+---------+---------+
+3 rows in set
+# 提交事务，修改表结果，并提交结果
+SELECT * FROM info；
+START TRANSACTION；
+UPDATE info set salary=1000000 WHERE id = 1;
+COMMIT;
+SELECT * FROM info；
++----+-------+---------+---------+--------+---------------------+---------+---------+
+| id | name  | surname | salary  | number | currenttime         | groupid | company |
++----+-------+---------+---------+--------+---------------------+---------+---------+
+|  1 | Botao | XIAO    | 1000000 |     12 | 2018-10-23 15:02:24 |       1 |       2 |
+|  2 | Yijia | REN     |  800000 |     12 | 2018-10-23 15:00:53 |       1 |       1 |
+|  3 | Jinyu | XIAO    |  800000 |     12 | 2018-10-23 15:00:53 |       1 |       1 |
++----+-------+---------+---------+--------+---------------------+---------+---------+
+```
+
+#### 保存点SAVEPOINT
+```SQL
+# 设置一个保留点
+SAVEPOINT delete1;
+# 回滚到一个保留点
+ROLLBACK TO delete1;
+```
+
+### 备份数据
+1. 使用mysqldump转储所有数据到某个外部文件。
+2. 使用mysqlhotcopy从某个数据库复制所有数据。
+3. 可以使用BACKUP TABLE或SELECT INTO OUTFILE转储所有数据到某个外部文件
+
+
