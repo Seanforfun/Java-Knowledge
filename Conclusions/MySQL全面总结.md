@@ -524,10 +524,10 @@ WHERE
 2 rows in set
 ```
 
-2. _通配符： _通配符能匹配出任意字符出现单一次数。
+2. 通配符(_ )： _ 通配符能匹配出任意字符出现单一次数。
 
 ```SQL
-# _替代了o，_位置可以填充所有单个字符。
+# _ 替代了o，_位置可以填充所有单个字符。
 SELECT *
 FROM test
 WHERE
@@ -717,7 +717,7 @@ ORDER BY surname DESC;
 #### 执行算数计算
 1. +: 加
 2. -：减
-3. *: 乘
+3. * : 乘
 4. /：除
 
 ```SQL
@@ -1361,3 +1361,52 @@ Query OK, 0 rows affected
 # 将test表重命名为info
 RENAME TABLE test TO info；
 ```
+
+### 使用视图
+我个人认为，视图的含义是我们在逻辑上抽象出一张新的表，这张表格就是我们通过SELECT语句查到的。通过保存视图避免了重复的查询过程，简化了我们的开发，存储了视图值，但是视图本身是一个抽象的含义，我们并没有为此新建一张表，实际上我们只是存储当前的语句并且在使用中作为子语句使用。
+```SQL
+# 创建一张名为highsalary的视图
+CREATE VIEW highsalary AS
+SELECT CONCAT(name, " ", surname) AS fullname
+FROM info
+WHERE salary > 8000;
+SELECT * FROM highsalary;
++-----------------+
+| fullname        |
++-----------------+
+| Seanforfun XIAO |
+| Irene REN       |
++-----------------+
+# 查看创建视图的语句
+SHOW CREATE VIEW highsalary；
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `highsalary` AS select concat(`info`.`name`,' ',`info`.`SURNAME`) AS `fullname` from `info` where (`info`.`salary` > 8000)
+# 删除highsalary视图
+DROP VIEW highsalary；
+```
+1. 增加了SQL的可重用性。
+2. 创建可重用的视图值：例如我们在创建视图时添加了对信息的处理，以后只需要每次调用视图就会出现规定格式的结果。
+3. 过滤不想要的数据。 （IS NOT NULL）
+4. 在视图中使用计算字段。
+
+### 存储过程 简单，安全，高性能
+1. 存储过程简单来说，就是为以后的使用而保存的一条或多条MySQL语句的集合。
+2. 我们将处理封装在容易使用的单元中，简化复杂的操作。
+3. 在测试和开发的过程中我们遵循实用相同的存储过程，保证了数据的一致性。
+4. 简化了对变动的管理，如果表名，列名或者逻辑业务发生了变化，我们只需要改变存储过程即可，使用它的人甚至东瀑布需要看到这样的变化。
+
+#### 创建存储过程 CREATE PROCUDURE 存储过程名
+1. 存储过程的添加，调用和删除
+```SQL
+# 创建一个存储过程，用于计算平均工资
+CREATE PROCEDURE avgprice()
+BEGIN
+    SELECT AVG(salary) AS average_salary
+    FROM INFO;
+END;
+# 调用存储过程
+CALL avgprice()；
+# 删除存储过程
+DROP PROCEDURE avgprice;
+```
+
+
