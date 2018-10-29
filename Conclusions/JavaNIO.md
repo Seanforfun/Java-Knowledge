@@ -174,6 +174,65 @@ ByteBuffer[] buffers = {head, body};
 channel.write(buffers); //buffers数组是write()方法的入参，write()方法会按照buffer在数组中的顺序，将数据写入到channel，注意只有position和limit之间的数据才会被写入。因此，如果一个buffer的容量为128byte，但是仅仅包含58byte的数据，那么这58byte的数据将被写入到channel中。因此与Scattering Reads相反，Gathering Writes能较好的处理动态消息。
 ```
 
+### 通道之间的数据传输TransferFrom/TransferTo
+通道之间的传输可以不借助Buffer执行。可以直接通过调用TransferFrom/TransferTo方法。
+```Java
+private static void transferUsingChannel(String src, String dest) throws IOException {
+        RandomAccessFile srcFile = new RandomAccessFile(src, "rw");
+        RandomAccessFile destFile = new RandomAccessFile(dest, "rw");
+        FileChannel in = null;
+        FileChannel out = null;
+        try {
+            in = srcFile.getChannel();
+            out = destFile.getChannel();
+            long size = in.size();
+            in.transferTo(0, size, out);
+        }finally {
+            in.close();
+            out.close();
+        }
+    }
+```
+
+## Selector
+Selector（选择器）是Java NIO中能够检测一到多个NIO通道，并能够知晓通道是否为诸如读写事件做好准备的组件。这样，一个单独的线程可以管理多个channel，从而管理多个网络连接。
+
+Selector通过单个线程处理多个Channel，为了使用selector，需要将Channel注册到Selector上。
+
+#### Selector的创建
+```Java
+Selector selector = Selector.open();
+```
+
+#### 向Selector中注册通道和事件
+1. 所有的可以注册到Selector中的通道都一定要是非阻塞的队列，所以要使用:
+```Java
+channel.configureBlocking(false);
+```
+2. 将channel注册到某个selector中，并且设定了响应事件。
+```Java
+SelectionKey key = channel.register(selector, SelectionKey.OP_ACCEPT);
+```
+
+3. 响应事件
+这些事件都是位，所以可以用位操作来监听多个事件。
+    1. SelectionKey.OP_CONNECT  //连接就绪
+    2. SelectionKey.OP_ACCEPT   //接收就绪
+    3. SelectionKey.OP_READ     //读就绪
+    4. SelectionKey.OP_WRITE    //写就绪
+
+4. 返回值SelectionKey的使用
+    1. interest集合， 可以获取监听事件的掩码。
+    2. ready集合， 已经准备就绪的事件的集合。使用掩码或直接使用判断值。
+    ```Java
+    int readySet = selectionKey.readyOps();
+	selectionKey.isAcceptable();
+	selectionKey.isConnectable();
+	selectionKey.isReadable();
+	selectionKey.isWritable();
+    ```
+
+
 ### 引用
 1. [同步(Synchronous)和异步(Asynchronous)](https://www.cnblogs.com/anny0404/p/5691379.html)
 2. [浅析Linux中的零拷贝技术](https://www.jianshu.com/p/fad3339e3448)
