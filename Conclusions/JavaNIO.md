@@ -287,6 +287,149 @@ while(channel.finishConnect()){
 
 * write() 非阻塞模式下，write()方法在尚未写出任何内容时可能就返回了。所以需要在循环中调用write()。
 * read() 非阻塞模式下,read()方法在尚未读取到任何数据时可能就返回了。所以需要关注它的int返回值，它会告诉你读取了多少字节。
+ 
+### ServerSocketChannel
+实际上用户端和服务器端对于流的使用是不同的。用户端需要自主创建TCP流，并且要知道发送的位置（服务器的ip和port）， 而服务器端是用于接收TCP流并且做出响应。所以只需要知道要监听的端口的port。
+
+#### 打开ServerSocketChannel
+```Java
+ServerSocketChannel channel = ServerSocketChannel.open();
+```
+
+#### 关闭ServerSocketChannel
+```Java
+channel.close();
+```
+
+#### 创建套接字Socket并绑定端口
+![Imgur](https://i.imgur.com/A4bNuoY.png)
+```Java
+while (true){
+    SocketChannel socketChannel = channel.accept(); //不断监听端口，并且获取nio通道。在阻塞模式下，线程会一致pending在这儿。
+    if(socketChannel != null){  //此处只是非空判断。
+        //已经获取了连接，可以进行逻辑。
+    }
+}
+```
+
+#### 非阻塞模式下的ServerSocketChannel
+ServerSocketChannel可以设置成非阻塞模式。在非阻塞模式下，accept() 方法会立刻返回，如果还没有新进来的连接,返回的将是null。 因此，需要检查返回的SocketChannel是否是null。
+```Java
+channel = ServerSocketChannel.open();
+channel.configureBlocking(false);
+ServerSocket socket = channel.socket();
+socket.bind(new InetSocketAddress(port));
+while (true){
+    SocketChannel socketChannel = channel.accept(); //在非阻塞模式下，不会阻塞，如果没有连接，会直接返回null，不会阻塞。
+    if(socketChannel != null){
+        //已经获取了连接，可以进行逻辑。
+    }
+}
+```
+
+#### ServerSocketChannel的模板
+```Java
+private void serverSocket(int port) throws IOException {
+    ServerSocketChannel channel = null;
+    try{
+        channel = ServerSocketChannel.open();
+        channel.configureBlocking(false);
+        ServerSocket socket = channel.socket();
+        socket.bind(new InetSocketAddress(port));
+        while (true){
+            SocketChannel socketChannel = channel.accept();
+            if(socketChannel != null){
+                //已经获取了连接，可以进行逻辑。
+            }
+        }
+    }finally {
+        if(channel != null)
+            channel.close();
+    }
+}
+```
+
+### DatagramChannel
+Java NIO中的DatagramChannel是一个能收发UDP包的通道。因为UDP是无连接的网络协议，所以不能像其它通道那样读取和写入。它发送和接收的是数据包。
+
+#### 创建一个DatagramChannel并绑定端口
+```Java
+channel = DatagramChannel.open();
+DatagramSocket socket = channel.socket();
+socket.bind(new InetSocketAddress(port));
+```
+
+#### 接收数据 receive
+从绑定的端口接收数据并且存入buffer中。如果接收的数据大于buffer的大小，则会直接truncate多出的数据。
+```Java
+ByteBuffer buffer = ByteBuffer.allocate(48);
+channel.receive(buffer);
+```
+
+#### 发送数据 send
+通过send()方法从DatagramChannel发送数据。UDP是无连接的，所以在发送数据的时候，我们要定位出连接位置。
+```Java
+channel.send(buffer, new InetSocketAddress(url, port)); //将buffer通过channel发送出去。
+```
+
+#### 连接到特定的地址
+可以将DatagramChannel“连接”到网络中的特定地址的。由于UDP是无连接的，连接到特定地址并不会像TCP通道那样创建一个真正的连接。而是锁住DatagramChannel ，让其只能从特定地址收发数据。
+```Java
+channel.connect(new InetSocketAddress(url, port));
+channel.read(buffer);
+channel.write(buffer);
+```
+
+### Pipe
+Pipe用于线程间通讯。是一条单向的通讯流。
+![Imgur](https://i.imgur.com/4VZ6kpT.png)
+
+#### 创建Pipe
+```Java
+pipe = Pipe.open();
+```
+
+#### 向Pipe中写入数据（写入sinkChannel）
+```Java
+private Pipe pipe;
+public void writeToPipe(String data) throws IOException {
+    if(pipe == null)
+        pipe = Pipe.open();
+    Pipe.SinkChannel sinkChannel = null;
+    try {
+        sinkChannel = pipe.sink();
+        ByteBuffer buffer = ByteBuffer.allocate(128);
+        buffer.put(data.getBytes());
+        buffer.flip();
+        while (buffer.hasRemaining())
+            sinkChannel.write(buffer);
+    }finally {
+        if(sinkChannel != null)
+            sinkChannel.close();
+    }
+}
+```
+
+#### 从pipe中读出数据(从sourceChannel读出数据)
+```Java
+public void readFromPipe() throws IOException {
+    if(pipe == null) return;
+    Pipe.SourceChannel sourceChannel = null;
+    try{
+        sourceChannel = this.pipe.source();
+        ByteBuffer buffer = ByteBuffer.allocate(48);
+        while (sourceChannel.read(buffer) != -1){
+            buffer.flip();
+            while (buffer.hasRemaining())
+                System.out.print(buffer.get());
+            buffer.clear();
+        }
+    }finally {
+        if(sourceChannel != null)
+            sourceChannel.close();
+    }
+}
+```
 
 ### 引用
 1. [同步(Synchronous)和异步(Asynchronous)](https://www.cnblogs.com/anny0404/p/5691379.html)
