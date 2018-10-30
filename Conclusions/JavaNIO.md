@@ -232,6 +232,61 @@ SelectionKey key = channel.register(selector, SelectionKey.OP_ACCEPT);
 	selectionKey.isWritable();
     ```
 
+### SocketChannel
+Java NIO中的SocketChannel是一个连接到TCP网络套接字的通道。可以通过以下2种方式创建SocketChannel：
+1. 打开一个SocketChannel并连接到互联网上的某台服务器。
+2. 一个新连接到达ServerSocketChannel时，会创建一个SocketChannel。
+
+#### 打开一个TCP套接字流
+创建一个套接字的对象，向其写入url和port
+```Java
+SocketChannel channel = SocketChannel.open();
+channel.connect(new InetSocketAddress(url, port)); //打开一个TCP套接字流
+```
+
+#### 从TCP套接字流中读取数据到buffer
+实际上和别的读取方法是一致的，就是利用channel的read方法，将套接字流中的数据写入buffer。
+```Java
+ ByteBuffer buffer = ByteBuffer.allocate(48);
+while(channel.read(buffer) != -1){
+    buffer.flip();
+    while (buffer.hasRemaining())
+        System.out.println(buffer.get());
+    buffer.clear();
+}
+```
+
+#### 向TCP套接字流写入数据
+实际上和写入文件FileChannel一样，将信息写入buffer，反转buffer的读写（从写至读），并写入channel。
+```Java
+ByteBuffer buffer = ByteBuffer.allocate(128);
+String file = "Write to TCP Socket at " + currentTime(format);
+buffer.put(file.getBytes());
+buffer.flip();
+while (buffer.hasRemaining()){
+    channel.write(buffer);
+}
+```
+注意SocketChannel.write()方法的调用是在一个while循环中的。Write()方法无法保证能写多少字节到SocketChannel。所以，我们重复调用write()直到Buffer没有要写的字节为止。
+
+#### 非阻塞模式
+和FileChannel不同，SocketChannel可以设置非阻塞模式，这意味着当前线程不需要一直阻塞在此TCP流上，当流中的数据未准备就绪或是当前流中的数据已经处理完还未被发送时，线程无需被阻塞。设置之后，就可以在异步模式下调用connect(), read() 和write()了。
+```Java
+channel.configureBlocking(false);
+```
+
+* connect() 在非阻塞模式下，可能连接还没有建立就已经返回了，所以我们在实现逻辑时必须在while循环中，该循环一直在执行判断。一定要先设置非阻塞模式，再进行连接，这才能进入非阻塞模式。
+```Java
+channel = SocketChannel.open();
+channel.configureBlocking(false);
+channel.connect(new InetSocketAddress(url, port));
+while(channel.finishConnect()){
+   // logic in connection.
+}
+```
+
+* write() 非阻塞模式下，write()方法在尚未写出任何内容时可能就返回了。所以需要在循环中调用write()。
+* read() 非阻塞模式下,read()方法在尚未读取到任何数据时可能就返回了。所以需要关注它的int返回值，它会告诉你读取了多少字节。
 
 ### 引用
 1. [同步(Synchronous)和异步(Asynchronous)](https://www.cnblogs.com/anny0404/p/5691379.html)
