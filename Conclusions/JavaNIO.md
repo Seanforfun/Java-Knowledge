@@ -144,11 +144,11 @@ ByteBuffer.allocate(字节数)；
         }
     }
  ```
- 
+
  ##### 从buffer中读出数据，此处例子省略，可以参考第一个例子。
  * channel.write(buffer)
  * buffer.get()
-  
+
 ##### rewind()方法
 Buffer.rewind()将position设回0，所以你可以重读Buffer中的所有数据。limit保持不变，仍然表示能从Buffer中读取多少个元素（byte、char等）。
 
@@ -232,6 +232,134 @@ SelectionKey key = channel.register(selector, SelectionKey.OP_ACCEPT);
 	selectionKey.isWritable();
     ```
 
+    ## Selector
+    Selector（选择器）是Java NIO中能够检测一到多个NIO通道，并能够知晓通道是否为诸如读写事件做好准备的组件。这样，一个单独的线程可以管理多个channel，从而管理多个网络连接。
+
+    Selector通过单个线程处理多个Channel，为了使用selector，需要将Channel注册到Selector上。
+
+    #### Selector的创建
+    ```Java
+    Selector selector = Selector.open();
+    ```
+
+    #### 向Selector中注册通道和事件
+    1. 所有的可以注册到Selector中的通道都一定要是非阻塞的队列，所以要使用:
+    ```Java
+    channel.configureBlocking(false);
+    ```
+    2. 将channel注册到某个selector中，并且设定了响应事件。
+    ```Java
+    SelectionKey key = channel.register(selector, SelectionKey.OP_ACCEPT);
+    ```
+
+    3. 响应事件
+    这些事件都是位，所以可以用位操作来监听多个事件。
+        1. SelectionKey.OP_CONNECT  //连接就绪
+        2. SelectionKey.OP_ACCEPT   //接收就绪
+        3. SelectionKey.OP_READ     //读就绪
+        4. SelectionKey.OP_WRITE    //写就绪
+
+    4. 返回值SelectionKey的使用
+        1. interest集合， 可以获取监听事件的掩码。
+        2. ready集合， 已经准备就绪的事件的集合。使用掩码或直接使用判断值。
+        ```Java
+        int readySet = selectionKey.readyOps();
+    	selectionKey.isAcceptable();
+    	selectionKey.isConnectable();
+    	selectionKey.isReadable();
+    	selectionKey.isWritable();
+        ```
+        3. 返回Selector和Channel
+        ```Java
+        Selector selector1 = key.selector();
+        SelectableChannel channel1 = key.channel();
+        ```
+        4. 附加的对象
+        * 附加的对象可以将一个对象或者更多信息附着到SelectionKey上，这样就能方便的识别某个给定的通道。例如，可以附加 与通道一起使用的Buffer，或是包含聚集数据的某个对象。
+        ```Java
+        key.attach(new ChannelInfo(1));
+        ChannelInfo channelInfo = (ChannelInfo)key.attachment();
+        ```
+        * register的时候也可以将附加的对象作为参数传入
+        ```Java
+        ChannelInfo info = new ChannelInfo(2);
+        channel.register(selector, SelectionKey.OP_CONNECT, info);
+        ```
+    
+#### 通过Selector选择通道
+1. 在selector注册了多个通道以后，我们可以通过selector选择通道。select方法用于确定通道就绪的情况。
+```Java  
+int select(); //阻塞到至少有一个通道在你注册的事件上就绪了
+int select(long timeout); //select(long timeout)和select()一样，除了最长会阻塞timeout毫秒(参数)。
+int selectNow(); //selectNow()不会阻塞，不管什么通道就绪都立刻返回（译者注：此方法执行非阻塞的选择操作。如果自从前一次选择操作后，没有通道变成可选择的，则此方法直接返回零。）。
+```
+
+2. selectedKeys()可以选择使用哪一条通道
+```Java
+Set selectedKeys = selector.selectedKeys();
+```
+
+3. 使用wakeup()唤醒, 这个还需要深入研究
+某个线程调用select()方法后阻塞了，即使没有通道已经就绪，也有办法让其从select()方法返回。只要让其它线程在第一个线程调用select()方法的那个对象上调用Selector.wakeup()方法即可。阻塞在select()方法上的线程会立马返回。
+
+如果有其它线程调用了wakeup()方法，但当前没有线程阻塞在select()方法上，下个调用select()方法的线程会立即“醒来（wake up）”。
+
+4. close()
+用完Selector后调用其close()方法会关闭该Selector，且使注册到该Selector上的所有SelectionKey实例无效。通道本身并不会关闭。
+
+5. 模板
+```Java
+public void readSocket(SocketChannel channel) throws IOException {
+    Selector selector = Selector.open();
+    ByteBuffer buffer = ByteBuffer.allocate(48);
+    SelectionKey key = channel.register(selector, SelectionKey.OP_READ, buffer);
+    while (true){
+        int selectRes = selector.select(1000);
+        if(selectRes == 0) continue;
+        Set<SelectionKey> keySet = selector.selectedKeys();
+        Iterator<SelectionKey> it = keySet.iterator();
+        while (it.hasNext()){
+            SelectionKey sk = it.next();
+            if(key.isAcceptable()){
+                //Acceptable logic
+            }else if(key.isConnectable()){
+                //Connectable logic
+            }else if(key.isReadable()){
+                //Readable logic
+            }else if(key.isWritable()){
+                // Writable logic
+            }
+        }
+        it.remove();
+    }
+}
+```
+
+### FileChannel
+FileChannel是阻塞的。
+```Java
+public void copyFileUsingByteBuffer(String src, String dest) throws IOException {
+    RandomAccessFile srcFile = new RandomAccessFile(src, "rw");
+    RandomAccessFile destFile = new RandomAccessFile(dest, "rw");
+    FileChannel in = null, out = null;
+    try{
+        in = srcFile.getChannel();  //读入文件的通道
+        out = destFile.getChannel();  //输出文件的通道
+        ByteBuffer buffer = ByteBuffer.allocate(128); //分配一块buffer
+        while(in.read(buffer) != -1){
+            buffer.flip();  //将buffer从读模式转换成写模式
+            while(buffer.hasRemaining()){
+                out.write(buffer);
+            }
+            buffer.clear();
+        }
+    }finally {
+        in.close(); //释放资源
+        out.close();
+    }
+}
+```
+
 ### SocketChannel
 Java NIO中的SocketChannel是一个连接到TCP网络套接字的通道。可以通过以下2种方式创建SocketChannel：
 1. 打开一个SocketChannel并连接到互联网上的某台服务器。
@@ -287,7 +415,7 @@ while(channel.finishConnect()){
 
 * write() 非阻塞模式下，write()方法在尚未写出任何内容时可能就返回了。所以需要在循环中调用write()。
 * read() 非阻塞模式下,read()方法在尚未读取到任何数据时可能就返回了。所以需要关注它的int返回值，它会告诉你读取了多少字节。
- 
+
 ### ServerSocketChannel
 实际上用户端和服务器端对于流的使用是不同的。用户端需要自主创建TCP流，并且要知道发送的位置（服务器的ip和port）， 而服务器端是用于接收TCP流并且做出响应。所以只需要知道要监听的端口的port。
 
