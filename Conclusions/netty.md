@@ -1,4 +1,7 @@
 # Netty Conclusion
+Netty是由JBOSS提供的一个java开源框架。Netty提供异步的、事件驱动的网络应用程序框架和工具，用以快速开发高性能、高可靠性的网络服务器和客户端程序。
+
+Netty整合了nio的基础设施，并且提供了对于多种协议，相比于Tomcat只对HTTP进行支持，Netty易于我们扩展自己的第三方协议并且稳定性较强。
 
 ### 三种I/O模型构造时间服务器/客户端
 #### 阻塞式I/O
@@ -110,3 +113,129 @@ public class BioTimerClient {
     }
 }
 ```
+
+#### 伪异步I/O
+伪异步IO是用于线程池替代每次创建新的线程，所以我们可以通过实现一个线程池，并通过每次使用线程池创建新的task。
+* 服务器端
+    * 服务器类
+    ```Java
+    public class FioTimerServer {
+        private Integer port = null;
+        private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        public  FioTimerServer(int port) throws IOException {
+            this.port = port;
+            ServerSocket serverSocket = null;
+            try {
+                serverSocket = new ServerSocket(port);
+                System.out.println("[Server]: Server starts at " + df.format(System.currentTimeMillis()));
+                Socket socket = null;
+                /**
+                 * Create a thread pool for execution.
+                 */
+                TimerServerThreadPool executors = new TimerServerThreadPool(20, 40);
+                while (true){
+                    socket = serverSocket.accept();
+                    executors.execute(new TimerServerHandler(socket));
+                }
+            }finally {
+                if(serverSocket != null)
+                    serverSocket.close();
+            }
+        }
+        public static void main(String[] args) throws IOException {
+            new FioTimerServer(8080);
+        }
+    }
+    ```
+    
+    * 服务器处理请求的业务
+    ```Java
+    public class TimerServerHandler implements Runnable {
+        private Socket socket = null;
+        private static String TOKEN = "TIMER QUERY";
+        private static String BAD_REQUEST = "BAD REQUEST";
+        private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        public TimerServerHandler(Socket socket){
+            this.socket = socket;
+        }
+        public void run() {
+            BufferedReader in = null;
+            PrintWriter out = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                out = new PrintWriter(socket.getOutputStream(), true);
+                String request = null;
+                String response = null;
+                while((request = in.readLine()) != null){
+                    System.out.println(request);
+                    if(request.equals(TOKEN)) {
+                        response = df.format(System.currentTimeMillis());
+                        break;
+                    }
+                }
+                if(response == null) response = BAD_REQUEST;
+                out.println(response);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if(in != null) {
+                    try {
+                        in.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if(out != null) out.close();
+            }
+        }
+    }
+    ```
+    
+    * 线程池的创建
+    ```Java
+    public class TimerServerThreadPool {
+        private ThreadPoolExecutor executors = null;
+        ArrayBlockingQueue<Runnable> blockingQueue = null;
+        public TimerServerThreadPool(int coreNum, int maxNum){
+            this.blockingQueue = new ArrayBlockingQueue<Runnable>(1000, false);
+            this.executors = new ThreadPoolExecutor(coreNum, maxNum, 1000L ,
+                    TimeUnit.SECONDS, blockingQueue, Executors.defaultThreadFactory());
+        }
+        public void execute(Runnable target){
+            this.executors.execute(target);
+        }
+    }
+    ```
+
+* 客户端
+```Java
+public class TimerClient {
+    private static String TOKEN = "TIMER QUERY";
+    private static String BAD_REQUEST = "BAD REQUEST";
+    public static void main(String[] args) throws IOException {
+        Socket socket = null;
+        BufferedReader in = null;
+        PrintWriter out = null;
+        try {
+            socket = new Socket("127.0.0.1", 8080);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
+            out.println(TOKEN);
+            System.out.println("[Client]: Client send order to server.");
+            String response = in.readLine();
+            if(response == null || response.equals(BAD_REQUEST))
+                System.out.println("[Client]: " + BAD_REQUEST);
+            else
+                System.out.println("[Client]: Responding time " + response);
+        }finally {
+            if(socket != null)  socket.close();
+            if(in != null) in.close();
+            if(out != null) out.close();
+        }
+    }
+}
+```
+
+### 引用
+1. [Netty 4.x User Guide 中文翻译《Netty 4.x 用户指南》](https://waylau.com/netty-4-user-guide/)
+2. [Netty](https://baike.baidu.com/item/Netty/10061624?fr=aladdin)
