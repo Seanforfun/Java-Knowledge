@@ -447,6 +447,218 @@ public class NioTimerClient implements Runnable {
 }
 ```
 
+#### 异步I/O
+借助了NIO2实现的完全异步I/O。
+* 服务器端
+```Java
+public class AioTimerServer {
+    public static void main(String[] args) throws IOException {
+        new Thread(new AioTimerServerHandler(8080)).start();
+    }
+}
+
+public class AioTimerServerHandler implements Runnable {
+    private Integer port = null;
+    private AsynchronousServerSocketChannel aChannel = null;
+    public AsynchronousServerSocketChannel getChannel() {
+        return aChannel;
+    }
+    private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    private CountDownLatch latch = null;
+    public CountDownLatch getLatch() {
+        return latch;
+    }
+    public AioTimerServerHandler(Integer port) throws IOException {
+        this.port = port;
+        aChannel = AsynchronousServerSocketChannel.open();
+        aChannel.bind(new InetSocketAddress(this.port), 1024);
+        System.out.println("[Server]: Server starts at " + df.format(System.currentTimeMillis()));
+    }
+    public void run() {
+        latch = new CountDownLatch(1);
+        try {
+            doAccept();
+            latch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    private void doAccept() throws InterruptedException {
+        this.aChannel.accept(this, new AcceptCompletionHandler());
+    }
+}
+
+public class AcceptCompletionHandler implements CompletionHandler<AsynchronousSocketChannel, AioTimerServerHandler> {
+    @Override
+    public void completed(AsynchronousSocketChannel result, AioTimerServerHandler attachment) {
+        attachment.getChannel().accept(attachment, this);
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        result.read(buffer, buffer, new ReadCompletionHandler(result, attachment));
+    }
+
+    @Override
+    public void failed(Throwable exc, AioTimerServerHandler attachment) {
+        attachment.getLatch().countDown();
+    }
+}
+
+public class ReadCompletionHandler implements CompletionHandler<Integer, ByteBuffer> {
+    private AsynchronousSocketChannel channel = null;
+    private static final  String TOKEN = "QUERY TIME";
+    private AioTimerServerHandler timerServerHandler = null;
+    private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    public ReadCompletionHandler(AsynchronousSocketChannel result, AioTimerServerHandler attachment) {
+        this.channel = result;
+        this.timerServerHandler = attachment;
+    }
+
+    @Override
+    public void completed(Integer result, ByteBuffer attachment) {
+        attachment.flip();
+        byte[] bytes = new byte[attachment.remaining()];
+        attachment.get(bytes);
+        String request = new String(bytes);
+        if(TOKEN.equals(request)){
+            System.out.println("[Server]: received message " + request);
+            doWrite(df.format(System.currentTimeMillis()));
+            System.out.println("[Server]: send a message to client.");
+        }
+    }
+
+    private void doWrite(String response) {
+        ByteBuffer attachment = ByteBuffer.allocate(1024);
+        attachment.put(response.getBytes());
+        attachment.flip();
+        while (attachment.hasRemaining())
+            this.channel.write(attachment, attachment, new CompletionHandler<Integer, ByteBuffer>() {
+                @Override
+                public void completed(Integer result, ByteBuffer attachment) {
+                    if(attachment.hasRemaining())
+                        channel.write(attachment, attachment, this);
+                    timerServerHandler.getLatch().countDown();
+                }
+
+                @Override
+                public void failed(Throwable exc, ByteBuffer attachment) {
+                    try {
+                        channel.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+    }
+
+    @Override
+    public void failed(Throwable exc, ByteBuffer attachment) {
+        try {
+            this.channel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+* 客户端
+```Java
+public class AioTimerClient {
+    public static void main(String[] args) {
+        new Thread(new AioClientHandler("127.0.0.1", 8080)).start();
+    }
+}
+public class AioClientHandler implements Runnable, CompletionHandler<Void, AioClientHandler> {
+    private String url = null;
+    private Integer port = null;
+    private AsynchronousSocketChannel channel = null;
+    private static final  String TOKEN = "QUERY TIME";
+    public CountDownLatch getLatch() {
+        return latch;
+    }
+
+    private CountDownLatch latch = null;
+    public AioClientHandler(String url, Integer port) {
+        this.port = port;
+        this.url = url;
+        try {
+            channel = AsynchronousSocketChannel.open();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void run() {
+        latch = new CountDownLatch(1);
+        channel.connect(new InetSocketAddress(this.url, this.port), this, this);
+        try {
+            latch.await();
+            channel.close();
+        } catch (InterruptedException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void completed(Void result, AioClientHandler attachment) {
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        buffer.put(TOKEN.getBytes());
+        buffer.flip();
+        channel.write(buffer, buffer, new CompletionHandler<Integer, ByteBuffer>() {
+            @Override
+            public void completed(Integer result, ByteBuffer attachment) {
+                if(attachment.hasRemaining())
+                    channel.write(attachment, attachment, this);
+                else{
+                    ByteBuffer buf = ByteBuffer.allocate(1024);
+                    channel.read(buf, buf, new CompletionHandler<Integer, ByteBuffer>() {
+                        @Override
+                        public void completed(Integer result, ByteBuffer attachment) {
+                            attachment.flip();
+                            byte[] bytes = new byte[attachment.remaining()];
+                            attachment.get(bytes);
+                            String response = new String(bytes);
+                            System.out.println("[Client]: current time is " + response);
+                            latch.countDown();
+                        }
+
+                        @Override
+                        public void failed(Throwable exc, ByteBuffer attachment) {
+                            exc.printStackTrace();
+                            try {
+                                channel.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void failed(Throwable exc, ByteBuffer attachment) {
+                exc.printStackTrace();
+                try {
+                    channel.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    @Override
+    public void failed(Throwable exc, AioClientHandler attachment) {
+        exc.printStackTrace();
+        try {
+            channel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
 ### 引用
 1. [Netty 4.x User Guide 中文翻译《Netty 4.x 用户指南》](https://waylau.com/netty-4-user-guide/)
 2. [Netty](https://baike.baidu.com/item/Netty/10061624?fr=aladdin)
