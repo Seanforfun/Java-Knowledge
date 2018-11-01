@@ -379,6 +379,13 @@ public class NioTimerClient implements Runnable {
                 e.printStackTrace();
             }
         }
+        if(selector != null){
+            try {
+                selector.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
     private void handleInput(SelectionKey key) throws IOException {
         if(key.isValid()){
