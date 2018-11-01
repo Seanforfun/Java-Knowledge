@@ -239,7 +239,7 @@ public class TimerClient {
 * 总结
 实际上这个伪异步IO真的是很吃对于线程池的设置（executor的数量，最大数量，blocking queue的大小都很限制）。
 
-### 异步I/O
+### 非阻塞I/O
 使用nio，对channel状况进行监听。
 * 服务器端，接受信息，如果收到“TIME QUERY”会发送当前时间给服务器，如果接收到STOP会关闭服务器。
 ```Java
@@ -658,6 +658,9 @@ public class AioClientHandler implements Runnable, CompletionHandler<Void, AioCl
     }
 }
 ```
+
+#### 四种模型的效率
+![Imgur](https://i.imgur.com/JyIomrD.png)
 
 ### 引用
 1. [Netty 4.x User Guide 中文翻译《Netty 4.x 用户指南》](https://waylau.com/netty-4-user-guide/)
