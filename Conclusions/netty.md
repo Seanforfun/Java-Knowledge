@@ -3,6 +3,8 @@ Netty是由JBOSS提供的一个java开源框架。Netty提供异步的、事件�
 
 Netty整合了nio的基础设施，并且提供了对于多种协议，相比于Tomcat只对HTTP进行支持，Netty易于我们扩展自己的第三方协议并且稳定性较强。
 
+这篇文章是基于《Netty权威指南》的总结，中间的代码参考了nettybook2项目，这两个都在引用中给了连接。
+
 ### 三种I/O模型构造时间服务器/客户端
 #### 阻塞式I/O
 创建一个Server,对于每一个请求，都会创建一个新的线程处理逻辑业务。
@@ -852,6 +854,162 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
 }
 ```
 
+### TCP的粘包（Package splicing）、拆包(Unpack)
+TCP是流协议，双方建立了一条流通道，所有数据都是连在一起的，包和包之间在TCP流中是没有分界线的。这说明多个包可能被当成一个包接收，或是一个大包被分成多个小包接收。
+![Imgur](https://i.imgur.com/0qBmb3h.png)
+1. D1和D2按照先后顺序到达。
+2. D1和D2作为一个大包到达。
+3. D1和D2的一部分先到达，D2的剩下来的小包后到达。
+4. 和3类似，D1一部分先到达，剩下的到达。
+5. 还有多种情况出现。
+
+#### TCP发生拆包的原因
+1. 应用程序write写入的长度大于socket缓存区的长度，发送初端将大包分解。
+2. 进行MSS的TCP分片。
+3. 超过MTU的IP分片。
+
+#### 未处理拆包的情况
+* 服务器
+```Java
+public class TimerServer {
+    public void bind(int port) throws InterruptedException {
+        EventLoopGroup bossGroup = new NioEventLoopGroup();
+        EventLoopGroup clientGroup = new NioEventLoopGroup();
+        try {
+            ServerBootstrap server = new ServerBootstrap();
+            server.group(bossGroup, clientGroup)
+                    .option(ChannelOption.SO_BACKLOG, 1024)
+                    .channel(NioServerSocketChannel.class)
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            ch.pipeline().addLast(new TimerServerHandler());
+                        }
+                    });
+            ChannelFuture future = server.bind(port).sync();
+            future.channel().closeFuture().sync();
+        }finally {
+            bossGroup.shutdownGracefully();
+            clientGroup.shutdownGracefully();
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        new TimerServer().bind(8080);
+    }
+}
+```
+
+* 服务器端响应的处理事件
+```Java
+public class TimerServerHandler extends ChannelInboundHandlerAdapter {
+    private int count = 0;
+    public static final String TOKEN = "QUERY TIME";
+    public static final String BAD_REQUEST = "BAD REQUEST";
+    private static final DateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+
+    /**
+     * 通道可读时的回调函数，打印出接收到的请求的数量
+     * 并响应。
+     * @param ctx
+     * @param msg
+     * @throws Exception
+     */
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        ByteBuf buffer = (ByteBuf)msg;
+        byte[] bytes = new byte[buffer.readableBytes()];
+        buffer.readBytes(bytes);
+        String request = new String(bytes, "UTF-8");
+        request = request.substring(0, request.length() - System.lineSeparator().length());
+        System.out.println("[Server]: Server received request " + request + " " + ++count + "times.");
+        String response = request.equals(TOKEN) ? df.format(System.currentTimeMillis()): BAD_REQUEST;
+        ctx.writeAndFlush(Unpooled.copiedBuffer(response.getBytes()));
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        ctx.flush();
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        ctx.close();
+    }
+}
+```
+
+* 客户端
+```Java
+public class TimerClient {
+    public void connect(String url, int port) throws InterruptedException {
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.group(workerGroup)
+                    .channel(NioSocketChannel.class)
+                    .option(ChannelOption.TCP_NODELAY, true)
+                    .handler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            ch.pipeline().addLast(new TimerClientHandler());
+                        }
+                    });
+            ChannelFuture future = bootstrap.connect(url, port).sync();
+            future.channel().closeFuture().sync();
+        }finally {
+            workerGroup.shutdownGracefully();
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        new TimerClient().connect("127.0.0.1", 8080);
+    }
+}
+```
+
+* 客户端的响应
+```Java
+public class TimerClientHandler extends ChannelInboundHandlerAdapter {
+    public static final String TOKEN = "QUERY TIME" + System.lineSeparator();
+    public static final String BAD_REQUEST = "BAD REQUEST";
+    public ByteBuf buffer = null;
+
+    /**
+     * 当通道可读时，发送100次请求。
+     * @param ctx
+     * @throws Exception
+     */
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        byte[] bytes = TOKEN.getBytes();
+        for (int i = 0; i < 100; i++){
+            buffer = Unpooled.copiedBuffer(bytes);
+            ctx.writeAndFlush(buffer);
+        }
+    }
+
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        ByteBuf buf = (ByteBuf)msg;
+        byte[] bytes = new byte[buf.readableBytes()];
+        buf.readBytes(bytes);
+        String response = new String(bytes, "UTF-8");
+        System.out.println("[Client]: current time is " + response);
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        ctx.close();
+    }
+}
+```
+
+* 结果
+实际上所有的请求都被接收到了，但是在服务器端很多请求都被粘包了，并没有将包正确的分割。
+
 ### 引用
 1. [Netty 4.x User Guide 中文翻译《Netty 4.x 用户指南》](https://waylau.com/netty-4-user-guide/)
 2. [Netty](https://baike.baidu.com/item/Netty/10061624?fr=aladdin)
+3. [nettybook2](https://github.com/wuyinxian124/nettybook2)
+4. [Netty 权威指南（请购买正版书，该连接只提供短期阅读）](https://github.com/Seanforfun/Books/tree/master/Netty)
