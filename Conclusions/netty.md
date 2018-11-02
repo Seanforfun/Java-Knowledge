@@ -1080,6 +1080,120 @@ public class TimerClient {
 1. 由于代码和上一部分重复性太高，就省略贴出了。
 2. 通过linesplitor来分割请求。
 
+### 分隔符和定长解码器
+#### 分隔符 DelimiterBasedFrameDecoder
+使用分隔符解码器的可以很好的解决TCP粘包的问题，会将收到的信息存入缓存区中，如果没有碰到分割符，就会一直存储下去直到到达最大长度。
+
+#### 定长解码器
+接收端会使用一个缓存区存储数据，一旦大一某个值就会刷出缓存区。
+
+* 回显服务器服务器端
+```Java
+public class EchoServer {
+    public void bind(int port) throws InterruptedException {
+        EventLoopGroup bossGroup = new NioEventLoopGroup();
+        EventLoopGroup workGroup = new NioEventLoopGroup();
+        try {
+            ServerBootstrap server  = new ServerBootstrap();
+            server.group(bossGroup, workGroup)
+                    .channel(NioServerSocketChannel.class)
+                    .option(ChannelOption.SO_BACKLOG, 1024)
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            /**
+                             * 定义一个分隔符解码器，定义最大长度，分隔符
+                             */
+//                            ch.pipeline().addLast(new DelimiterBasedFrameDecoder(1024,true, false,
+//                                    Unpooled.copiedBuffer(ServerSideConst.SPLITER.getBytes())));
+                            /**
+                             * 定义一个定长解码器，如果缓存区中的字符的长度大于设置值就会直接
+                             * 刷出缓存区。
+                             */
+                            ch.pipeline().addLast(new FixedLengthFrameDecoder(10));
+                            ch.pipeline().addLast(new StringDecoder());
+                            ch.pipeline().addLast(new EchoServerHandler());
+                        }
+                    });
+            ChannelFuture future = server.bind(port).sync();
+            future.channel().closeFuture().sync();
+        }finally {
+            bossGroup.shutdownGracefully();
+            workGroup.shutdownGracefully();
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        new EchoServer().bind(8080);
+    }
+}
+```
+
+* 回显服务器处理器
+```Java
+public class EchoServerHandler extends ChannelInboundHandlerAdapter {
+    private static final DateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        String request = (String)msg;
+        System.out.println("[Server]: receive request " + request);
+        ctx.writeAndFlush(Unpooled.copiedBuffer((request + ServerSideConst.SPLITER).getBytes()));
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        ctx.flush();
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        ctx.close();
+    }
+}
+```
+
+* 回显服务客户端
+```Java
+public class EchoClient {
+    public void connect(String url, int port) throws InterruptedException, IOException {
+        EventLoopGroup group = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.group(group)
+                    .channel(NioSocketChannel.class)
+                    .option(ChannelOption.TCP_NODELAY, true)
+                    .handler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            ch.pipeline().addLast(new DelimiterBasedFrameDecoder(1024,
+                                    Unpooled.copiedBuffer(ServerSideConst.SPLITER.getBytes())));
+                            ch.pipeline().addLast(new StringDecoder());
+                            ch.pipeline().addLast(new EchoClientHandler());
+                        }
+                    });
+            /**
+             * 此步骤是异步的，该函数会直接返回，并不会阻塞。
+             */
+            ChannelFuture future = bootstrap.connect(url, port).sync();
+            BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+            while (true){
+                /**
+                 * 程序会在这个步骤进行阻塞。直到获得输入行中的换行符。
+                 */
+                String read = in.readLine();
+                future.channel().writeAndFlush(Unpooled.copiedBuffer((read + ServerSideConst.SPLITER).getBytes()));
+            }
+//            future.channel().closeFuture().sync();
+        }finally {
+            group.shutdownGracefully();
+        }
+    }
+    public static void main(String[] args) throws IOException, InterruptedException {
+        new EchoClient().connect("127.0.0.1", 8080);
+    }
+}
+```
+
+
 ### 引用
 1. [Netty 4.x User Guide 中文翻译《Netty 4.x 用户指南》](https://waylau.com/netty-4-user-guide/)
 2. [Netty](https://baike.baidu.com/item/Netty/10061624?fr=aladdin)
