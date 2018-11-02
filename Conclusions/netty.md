@@ -1008,6 +1008,78 @@ public class TimerClientHandler extends ChannelInboundHandlerAdapter {
 * 结果
 实际上所有的请求都被接收到了，但是在服务器端很多请求都被粘包了，并没有将包正确的分割。
 
+#### 处理TCP粘包
+* 服务器
+```Java
+public class TimerServer {
+    public void bind(int port) throws InterruptedException {
+        EventLoopGroup bossGroup = new NioEventLoopGroup();
+        EventLoopGroup clientGroup = new NioEventLoopGroup();
+        try {
+            ServerBootstrap server = new ServerBootstrap();
+            server.group(bossGroup, clientGroup)
+                    .option(ChannelOption.SO_BACKLOG, 1024)
+                    .channel(NioServerSocketChannel.class)
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            /**
+                             * 添加了两个新的事件处理器
+                             * 1. 通过line分割请求。
+                             * 2. 将ByteBuf解析成String的解析器。
+                             */
+                            ch.pipeline().addLast(new LineBasedFrameDecoder(1024));
+                            ch.pipeline().addLast(new StringDecoder());
+                            ch.pipeline().addLast(new TimerServerHandler());
+                        }
+                    });
+            ChannelFuture future = server.bind(port).sync();
+            future.channel().closeFuture().sync();
+        }finally {
+            bossGroup.shutdownGracefully();
+            clientGroup.shutdownGracefully();
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        new TimerServer().bind(8080);
+    }
+}
+```
+
+* 客户端
+```Java
+public class TimerClient {
+    public void connect(String url, int port) throws InterruptedException {
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.group(workerGroup)
+                    .channel(NioSocketChannel.class)
+                    .option(ChannelOption.TCP_NODELAY, true)
+                    .handler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            ch.pipeline().addLast(new LineBasedFrameDecoder(1024));
+                            ch.pipeline().addLast(new StringDecoder());
+                            ch.pipeline().addLast(new TimerClientHandler());
+                        }
+                    });
+            ChannelFuture future = bootstrap.connect(url, port).sync();
+            future.channel().closeFuture().sync();
+        }finally {
+            workerGroup.shutdownGracefully();
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        new TimerClient().connect("127.0.0.1", 8080);
+    }
+}
+```
+
+* 总结
+1. 由于代码和上一部分重复性太高，就省略贴出了。
+2. 通过linesplitor来分割请求。
+
 ### 引用
 1. [Netty 4.x User Guide 中文翻译《Netty 4.x 用户指南》](https://waylau.com/netty-4-user-guide/)
 2. [Netty](https://baike.baidu.com/item/Netty/10061624?fr=aladdin)
