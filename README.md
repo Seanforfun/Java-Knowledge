@@ -54,6 +54,9 @@ Save my conclusions different aspect of Java.
 * [AOP AspectJ](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/AOPAspectJ.md)
 * [Spring Properties：格式转换器，i18n， Spring事件体系](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/SpringProperties.md)
 
+#### Netty,集成NIO框架, 分布式的RPC调用的底层单元
+* [Netty](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/netty.md)
+
 #### Spring Cloud reference: [SpringCloudLearning](https://github.com/forezp/SpringCloudLearning)
 通过Spring Cloud和SpringBoot实现微服务构架，严格参考[SpringCloudLearning](https://github.com/forezp/SpringCloudLearning)，更详细的资料可以根据所提供的reference进行学习，本地记录了学习该项目的过程，也可供参考。
 ![微服务构架](https://i.imgur.com/COoCyXU.png)

@@ -147,7 +147,7 @@ public class BioTimerClient {
         }
     }
     ```
-    
+
     * 服务器处理请求的业务
     ```Java
     public class TimerServerHandler implements Runnable {
@@ -190,7 +190,7 @@ public class BioTimerClient {
         }
     }
     ```
-    
+
     * 线程池的创建
     ```Java
     public class TimerServerThreadPool {
@@ -661,6 +661,196 @@ public class AioClientHandler implements Runnable, CompletionHandler<Void, AioCl
 
 #### 四种模型的效率
 ![Imgur](https://i.imgur.com/JyIomrD.png)
+
+### Netty的入门应用
+#### 通过Netty重写时间服务器和客户端
+* Netty服务器端
+```Java
+public class NettyTimerServer {
+    private Integer port = null;
+
+    public void bind(int port) throws InterruptedException {
+        this.port = port;
+        EventLoopGroup bossGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        try {
+            ServerBootstrap server = new ServerBootstrap();
+            /**
+             * 定义一个线程组，配置服务端的NIO线程组
+             */
+            server.group(bossGroup, workerGroup)
+                    .channel(NioServerSocketChannel.class)
+                    /**
+                     * 选择服务器的种类
+                     */
+                    .option(ChannelOption.SO_BACKLOG, 1024)
+                    /**
+                     * workGroup的初始化的方法，并在初始化的时候注册监听的事件。
+                     */
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel socketChannel) throws Exception {
+                            socketChannel.pipeline().addLast(new NettyTimerServerHandler());
+                        }
+                    });
+            /**
+             * 绑定监听一个端口
+             */
+            ChannelFuture future = server.bind(this.port).sync();
+            /**
+             * 监听端口的关闭
+             */
+            future.channel().closeFuture().sync();
+        }finally {
+            /**
+             * 优雅退出，释放线程池资源
+             */
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        new NettyTimerServer().bind(8080);
+    }
+}
+```
+
+* 服务器的处理流程
+```Java
+public class NettyTimerServerHandler extends ChannelInboundHandlerAdapter {
+    private static final String TOKEN = "TIME QUERY";
+    private static final DateFormat df  = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+
+    /**
+     * 当通道可读时的回调函数。
+     * @param ctx
+     * @param msg
+     * @throws Exception
+     */
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        ByteBuf buffer = (ByteBuf) msg;
+        byte[] bytes = new byte[buffer.readableBytes()];
+        buffer.readBytes(bytes);
+        String request = new String(bytes);
+        System.out.println("[Server]: server received request " + request);
+        if(TOKEN.equals(request)){
+            ByteBuf response = Unpooled.copiedBuffer(df.format(System.currentTimeMillis()).getBytes());
+            ctx.writeAndFlush(response);
+        }
+    }
+
+    /**
+     * 通道读取完毕后的回调函数。
+     * @param ctx
+     * @throws Exception
+     */
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        ctx.flush();
+    }
+
+    /**
+     * 通道发生异常时的回调函数。
+     * @param ctx
+     * @param cause
+     * @throws Exception
+     */
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        ctx.close();
+    }
+}
+```
+
+* 客户端
+```Java
+public class NettyTimerClient {
+    public void connect(String url, int port){
+        EventLoopGroup group = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.group(group)
+                    .channel(NioSocketChannel.class)
+                    .option(ChannelOption.TCP_NODELAY, true)
+                    .handler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            /**
+                             * 添加一个响应事件并注册到端口的对应链上
+                             */
+                            ch.pipeline().addLast(new NettyClientHandler());
+                        }
+                    });
+            /**
+             * 发起异步连接操作，打开了一个通道并实现同步。
+             */
+            ChannelFuture future = bootstrap.connect(url, port).sync();
+            /**
+             * 链路端断开后进行关闭。
+             */
+            future.channel().closeFuture().sync();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            group.shutdownGracefully();
+        }
+    }
+    public static void main(String[] args) {
+        new NettyTimerClient().connect("127.0.0.1", 8080);
+    }
+}
+```
+
+* 客户端的回调函数
+```Java
+public class NettyClientHandler extends ChannelInboundHandlerAdapter {
+    private static final String TOKEN = "TIME QUERY";
+    private ByteBuf buf = null;
+    public NettyClientHandler() {
+        byte[] bytes = TOKEN.getBytes();
+        buf = Unpooled.copiedBuffer(bytes);
+    }
+
+    /**
+     * 当连接建立的时候，将数据写入通道中。
+     * @param ctx
+     * @throws Exception
+     */
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        ctx.writeAndFlush(buf);
+    }
+
+    /**
+     * 当通道可读时从通道中读出数据。
+     * @param ctx
+     * @param msg
+     * @throws Exception
+     */
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        ByteBuf buffer = (ByteBuf) msg;
+        byte[] bytes = new byte[buffer.readableBytes()];
+        buffer.readBytes(bytes);
+        String response = new String(bytes);
+        System.out.println("[Client]: current time is " + response);
+    }
+
+    /**
+     * 异常时的回调函数。
+     * @param ctx
+     * @param cause
+     * @throws Exception
+     */
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        ctx.close();
+    }
+}
+```
 
 ### 引用
 1. [Netty 4.x User Guide 中文翻译《Netty 4.x 用户指南》](https://waylau.com/netty-4-user-guide/)
