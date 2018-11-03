@@ -1193,6 +1193,136 @@ public class EchoClient {
 }
 ```
 
+### POJO的传递
+在上面的例子中，我们传递的都是简单的字符码，但是在真正的开发中，我们会使用网络传递java对象。所以我们要使用java的序列化和反序列化技术。书中总共列举了四种技术：
+1. Java本身的序列化技术
+2. Google的ProtoBuf
+3. Facebook的Thrift
+4. JBoss的Marshalling
+
+#### 使用Java的序列化技术
+1. 类要实现Serializable接口并定义出UID。
+```Java
+public class UserInfo implements Serializable {
+    private static final long serialVersionUID = 2497464897604961378L;
+    private Long id = null;
+    private String name = null;
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public UserInfo(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "[UserInfo: id = "+ getId() +"; name = "+ getName()+"]";
+    }
+}
+```
+
+2. 服务器端，增加了两个新的handler作为编解码器
+```Java
+public class SerializeServer {
+    public void bind(int port) throws InterruptedException {
+        EventLoopGroup bossGroup = new NioEventLoopGroup();
+        EventLoopGroup bworkGroup = new NioEventLoopGroup();
+        try{
+            ServerBootstrap server = new ServerBootstrap();
+            server.group(bossGroup, bworkGroup)
+                    .channel(NioServerSocketChannel.class)
+                    .option(ChannelOption.SO_BACKLOG, 1024)
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            /**
+                             * 增加一个解码器用于解析类的序列化。
+                             * 增加一个编码器用于将对象序列化。
+                             */
+                            ch.pipeline().addLast(new ObjectDecoder(1024 * 1024, ClassResolvers.weakCachingResolver(this.getClass().getClassLoader())));
+                            ch.pipeline().addLast(new ObjectEncoder());
+                            ch.pipeline().addLast(new SerializeServerHandler());
+                        }
+                    });
+            ChannelFuture future = server.bind(port).sync();
+            future.channel().closeFuture().sync();
+        }finally {
+            bossGroup.shutdownGracefully();
+            bworkGroup.shutdownGracefully();
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        new SerializeServer().bind(8080);
+    }
+}
+```
+
+3. 实现句柄函数用于处理我们server的业务
+```Java
+public class SerializeServerHandler extends ChannelInboundHandlerAdapter {
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        UserInfo info = (UserInfo)msg;
+        System.out.println(info);
+    }
+}
+```
+
+4. 客户端和服务器端的重合度很高，取决于我们是否想要发送和接受序列化的对象。
+```Java
+public class SerializeClient {
+    public void connect(String url, int port) throws InterruptedException {
+        EventLoopGroup client = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.group(client)
+                    .channel(NioSocketChannel.class)
+                    .option(ChannelOption.TCP_NODELAY, true)
+                    .handler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            ch.pipeline().addLast(new ObjectDecoder(1024 * 1024, ClassResolvers.weakCachingResolver(this.getClass().getClassLoader())));
+                            ch.pipeline().addLast(new ObjectEncoder());
+                            ch.pipeline().addLast(new SerializeClientHandler());
+                        }
+                    });
+            ChannelFuture future = bootstrap.connect(url, port).sync();
+            future.channel().closeFuture().sync();
+        }finally {
+            client.shutdownGracefully();
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        new SerializeClient().connect("127.0.0.1", 8080);
+    }
+}
+```
+
+5. 客户端的处理函数
+```Java
+public class SerializeClientHandler extends ChannelInboundHandlerAdapter {
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        UserInfo info = new UserInfo(1L, "Sean");
+        for(int i= 0; i < 10; i++)
+            ctx.writeAndFlush(info);  //直接将对象写入context即可。
+    }
+}
+```
 
 ### 引用
 1. [Netty 4.x User Guide 中文翻译《Netty 4.x 用户指南》](https://waylau.com/netty-4-user-guide/)
