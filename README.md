@@ -10,8 +10,10 @@ Save my conclusions different aspect of Java.
 * [Inner class 内部类](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Innerclass%E5%86%85%E9%83%A8%E7%B1%BB.md)
 * [Java值传递](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Java%E5%80%BC%E4%BC%A0%E9%80%92.md)
 * [Proxy](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Proxy.txt)
-* [Serialize](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Serialize.txt)
 * [Condition](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Condition.md)
+* Serialize 序列化技术
+	* [Serialize using Java Serialization](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Serialize.txt)
+	* [Google Protobuf](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Protobuf.md)
 * Concurrent 并发
 	* [MultiThreadAndLock v1.0](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/MultiThreadAndLock.txt)
 	* [CountDownLatch,CyclicBarrier,Semaphore](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/CountDownLatch,CyclicBarrier,Semaphore.md)
