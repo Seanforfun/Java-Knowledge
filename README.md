@@ -13,7 +13,7 @@ Save my conclusions different aspect of Java.
 * [Condition](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Condition.md)
 * Serialize 序列化技术
 	* [Serialize using Java Serialization](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Serialize.txt)
-	* [Google Protobuf](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Protobuf.md)
+	* [Google Protobuf](https://github.com/Seanforfun/Java-Knowledge/blob/master/Conclusions/ProtoBuf.md)
 * Concurrent 并发
 	* [MultiThreadAndLock v1.0](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/MultiThreadAndLock.txt)
 	* [CountDownLatch,CyclicBarrier,Semaphore](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/CountDownLatch,CyclicBarrier,Semaphore.md)

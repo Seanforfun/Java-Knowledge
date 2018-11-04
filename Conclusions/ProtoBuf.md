@@ -113,3 +113,6 @@ message UserInfo{
 
 3. View->Tool Windows->Maven projects->protobuf->protobuf:compile, 就会在target中生成编译成的java文件。
 4. 将java文件考入对应的包中。
+
+### 引用
+1. [protobuf 和 intellij 配置使用](https://blog.csdn.net/u010939285/article/details/78538927)
