@@ -1324,6 +1324,154 @@ public class SerializeClientHandler extends ChannelInboundHandlerAdapter {
 }
 ```
 
+### 使用Google Protobuf作为编解码器。
+已经写了一篇文章总结总结了[google protobuf](https://github.com/Seanforfun/Java-Knowledge/blob/master/Conclusions/ProtoBuf.md)
+1. 服务器端
+```Java
+public class ProtobufServer {
+    public void bind(int port) throws InterruptedException {
+        EventLoopGroup bossGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        try {
+            ServerBootstrap server = new ServerBootstrap();
+            server.group(bossGroup, workerGroup)
+                    .channel(NioServerSocketChannel.class)
+                    .option(ChannelOption.SO_BACKLOG, 1024)
+                    .handler(new LoggingHandler(LogLevel.INFO))
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            /**
+                             * 用作半包处理
+                             */
+                            ch.pipeline().addLast(new ProtobufVarint32FrameDecoder());
+                            /**
+                             * 添加解码器并在解码器中生命目标类。protobuf则会通过目标类解码。
+                             */
+                            ch.pipeline().addLast(new ProtobufDecoder(UserInfoProto.UserInfo.getDefaultInstance()));
+                            /**
+                             * 添加用于对象注入的句柄
+                             */
+                            ch.pipeline().addLast(new ProtobufVarint32LengthFieldPrepender());
+                            /**
+                             * 添加编码器
+                             */
+                            ch.pipeline().addLast(new ProtobufEncoder());
+                            ch.pipeline().addLast(new ProtobufServerHandler());
+                        }
+                    });
+            ChannelFuture future = server.bind(port).sync();
+            future.channel().closeFuture().sync();
+        }finally {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        new ProtobufServer().bind(8080);
+    }
+}
+```
+
+2. 服务器端的句柄函数
+```Java
+public class ProtobufServerHandler extends ChannelInboundHandlerAdapter {
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        UserInfoProto.UserInfo info = (UserInfoProto.UserInfo) msg;
+        System.out.println(info.toString());
+        UserInfoProto.UserInfo irene = resp(10, "Irene");
+        ctx.writeAndFlush(irene);
+    }
+
+    private UserInfoProto.UserInfo resp(long id, String name){
+        UserInfoProto.UserInfo.Builder builder = UserInfoProto.UserInfo.newBuilder();
+        builder.setId(id);
+        builder.setName(name);
+        return builder.build();
+    };
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        ctx.close();
+    }
+}
+```
+
+3. 客户端
+```Java
+public class ProtobufClient {
+    public void connect(String url, int port) throws InterruptedException {
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.group(workerGroup)
+                    .channel(NioSocketChannel.class)
+                    .option(ChannelOption.TCP_NODELAY, true)
+                    .handler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            /**
+                             * 用作半包处理
+                             */
+                            ch.pipeline().addLast(new ProtobufVarint32FrameDecoder());
+                            /**
+                             * 添加解码器并在解码器中生命目标类。protobuf则会通过目标类解码。
+                             */
+                            ch.pipeline().addLast(new ProtobufDecoder(UserInfoProto.UserInfo.getDefaultInstance()));
+                            /**
+                             * 添加用于对象注入的句柄
+                             */
+                            ch.pipeline().addLast(new ProtobufVarint32LengthFieldPrepender());
+                            /**
+                             * 添加编码器
+                             */
+                            ch.pipeline().addLast(new ProtobufEncoder());
+                            ch.pipeline().addLast(new ProtobufClientHandler());
+                        }
+                    });
+            ChannelFuture future = bootstrap.connect(url, port).sync();
+            future.channel().closeFuture().sync();
+        }finally {
+            workerGroup.shutdownGracefully();
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        new ProtobufClient().connect("127.0.0.1", 8080);
+    }
+}
+```
+
+4. 客户端的句柄函数
+```Java
+public class ProtobufClientHandler extends ChannelInboundHandlerAdapter {
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        UserInfoProto.UserInfo info = (UserInfoProto.UserInfo) msg;
+        System.out.println(info);
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        UserInfoProto.UserInfo jenny = createInstance(11L, "Jenny");
+        ctx.writeAndFlush(jenny);
+    }
+    private UserInfoProto.UserInfo createInstance(long id, String name){
+        UserInfoProto.UserInfo.Builder builder = UserInfoProto.UserInfo.newBuilder();
+        builder.setId(id);
+        builder.setName(name);
+        return builder.build();
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        ctx.close();
+    }
+}
+```
+
 ### 引用
 1. [Netty 4.x User Guide 中文翻译《Netty 4.x 用户指南》](https://waylau.com/netty-4-user-guide/)
 2. [Netty](https://baike.baidu.com/item/Netty/10061624?fr=aladdin)

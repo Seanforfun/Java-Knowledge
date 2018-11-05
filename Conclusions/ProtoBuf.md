@@ -114,5 +114,47 @@ message UserInfo{
 3. View->Tool Windows->Maven projects->protobuf->protobuf:compile, 就会在target中生成编译成的java文件。
 4. 将java文件考入对应的包中。
 
+### 使用protobuf序列化和反序列化对象
+```Java
+public class UserInfoProtoTest {
+
+    /**
+     * 将对象序列化。
+     * @param userInfo
+     * @return
+     */
+    private static byte[] encode(UserInfoProto.UserInfo userInfo){
+        return userInfo.toByteArray();
+    }
+
+    /**
+     * 将序列化的对象反序列化。
+     * @param bytes
+     * @return
+     * @throws InvalidProtocolBufferException
+     */
+    private static UserInfoProto.UserInfo decode(byte[] bytes) throws InvalidProtocolBufferException {
+        return UserInfoProto.UserInfo.parseFrom(bytes);
+    }
+
+    /**
+     * 生成对象并进行注入。
+     * @return
+     */
+    private static UserInfoProto.UserInfo createUserInfo(){
+        UserInfoProto.UserInfo.Builder builder = UserInfoProto.UserInfo.newBuilder();
+        builder.setId(10L);
+        builder.setName("SeanForFun");
+        return builder.build();
+    }
+    public static void main(String[] args) throws InvalidProtocolBufferException {
+        UserInfoProto.UserInfo info = createUserInfo();
+        System.out.println(info);
+        UserInfoProto.UserInfo info1 = decode(encode(info));
+        System.out.println(info1.toString());
+    }
+}
+```
+
 ### 引用
 1. [protobuf 和 intellij 配置使用](https://blog.csdn.net/u010939285/article/details/78538927)
