@@ -19,6 +19,7 @@ Save my conclusions different aspect of Java.
 	* [CountDownLatch,CyclicBarrier,Semaphore](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/CountDownLatch,CyclicBarrier,Semaphore.md)
 	* [Java Memory Model](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JMM.md)
 	* [Volatile and Synchronized](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/VolatileSynchronized.md)
+	* [Object in concurrent](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/ObjectInConcurrent.md)
 * I/O系列
 	* [Java I/O](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JavaIO.md)
 	* [Java NIO](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/JavaNIO.md)

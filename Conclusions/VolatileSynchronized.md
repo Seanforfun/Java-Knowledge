@@ -53,7 +53,24 @@ public class SyncExample {
 }
 9996
 ```
-对于用volatile修饰的变量，JVM虚拟机只是保证从主内存加载到线程工作内存的值是最新的，例如线程1和线程2在进行read和load的操作中，发现主内存中count的值都是5，那么都会加载这个最新的值。也就是说，volatile关键字解决的是变量读时的可见性问题 ，但无法保证原子性，对于多个线程访问同一个实例变量还是需要加锁同步。
+问题分析：此处的count++分为3步：
+1. 从主存中获取最新的count值。（安全）
+2. 将取出的值加一。（不安全）
+3. 写回主存中。（不安全）
+第一步可以保证count的值是最新的，但是整个操作不是原子性的，所以是无法保证线程安全的。
+
+#### volatile的使用场景
+作为标志位使用
+```Java
+public volatile boolean init = false;
+//线程1
+init = true；
+//线程2
+while(!init){   //可以确保每次读出的值都是最新的。
+    sleep();
+}
+load(context);
+```
 
 ## synchronized 可重入锁，互斥锁
 对于synchronized锁定的对象，同一时间只有一个对象能对其进行访问。
