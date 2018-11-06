@@ -25,6 +25,7 @@ Save my conclusions different aspect of Java.
 ## Java EE
 ### Http
 * [HTTP总结](https://github.com/Seanforfun/ItcastLearningSmallDemos/blob/master/HTTP%E6%80%BB%E7%BB%93.txt)
+* [HTTP V2.0](https://github.com/Seanforfun/Java-Knowledge/blob/master/Conclusions/Http%20V2.0.md)
 
 ### Servlet, Listener, Filter
 * [Servlet](https://github.com/Seanforfun/JavaCore/blob/master/Conclusions/Servlet.md)
