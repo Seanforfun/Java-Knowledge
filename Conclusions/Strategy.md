@@ -53,5 +53,9 @@ this is concrete method 1...
 this is concrete method 2...
 ```
 
+### 再看策略模式
+1. 实际上通过接口传入了接口的实现，这被称为策略的传入。
+2. 策略是什么？ 策略是一段代码块，如果我们当前策略只有一个方法需要被实现，我们可以使用函数式接口@FunctionalInterface。此时我们可以直接使用Lambda表达式传入代码块。
+
 ### Reference
 1. [设计模式学习之策略模式](https://blog.csdn.net/u012124438/article/details/70039943)
